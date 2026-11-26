@@ -26,6 +26,22 @@
 - Scheduled low-stock notifications
 - Polling or WebSocket order status updates
 
+## Architecture and implementation
+
+- Technical implementation plan: `docs/IMPLEMENTATION_PLAN.md`
+- Feature requirements: `CHECKLIST.md`
+- Visual design reference: `client/DESIGN.md`
+- Workspace instructions: `.github/copilot-instructions.md`
+- Specialist agents: `.github/agents/`
+- Reusable implementation skills: `.github/skills/`
+
+## Free-tier deployment
+
+- Client: Vercel or Netlify
+- Server: Render or Railway
+- Database: MongoDB Atlas Free Tier
+- Email: Resend or Gmail SMTP
+
 ## Start
 
 ```bash
