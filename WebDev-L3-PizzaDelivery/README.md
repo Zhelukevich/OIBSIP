@@ -29,6 +29,7 @@
 ## Architecture and implementation
 
 - Technical implementation plan: `docs/IMPLEMENTATION_PLAN.md`
+- Docker and MongoDB setup: `docs/DOCKER.md`
 - Feature requirements: `CHECKLIST.md`
 - Visual design reference: `client/DESIGN.md`
 - Workspace instructions: `.github/copilot-instructions.md`
