@@ -25,11 +25,11 @@ Audit on 2026-11-27. Checked items have a complete implementation for the checkl
 - [x] User login with JWT-based authorisation. [Auth middleware](server/src/middleware/auth.ts)
 - [ ] Forgot password flow *(email reset link)*. The API issues and accepts reset tokens. The email needs a clickable URL, and the client needs recovery and reset pages. [Auth routes](server/src/routes/auth.routes.ts)
 - [x] Dashboard displaying available pizza varieties. The home page shows three ready-made pizzas with prices and availability based on ingredient stock. Customers can add available pizzas to the cart or open the custom pizza builder. [Storefront](client/src/pages/StorefrontPage.tsx)
-- [ ] Custom pizza builder flow. Ingredient sections share a single screen. Finish the four-step flow and vegetable multi-select. [App](client/src/App.tsx)
+- [x] Custom pizza builder flow. The dedicated page guides customers through four steps and shows the recipe and running total before adding the pizza to the cart. [Builder page](client/src/pages/BuilderPage.tsx)
   - [x] **Step 1:** Choose a pizza base *(5 options seeded)*.
   - [x] **Step 2:** Choose a sauce *(5 options seeded)*.
   - [x] **Step 3:** Choose a cheese type.
-  - [ ] **Step 4:** Choose vegetables *(multiple select)*. The current selection stores one vegetable.
+  - [x] **Step 4:** Choose vegetables *(multiple select)*.
 - [x] Order summary page before payment. The order details page shows the ingredients and total before opening checkout. [Tracking page](client/src/pages/TrackingPage.tsx)
 - [ ] Razorpay checkout integration *(test mode — clicking "Success" confirms the order)*. Checkout and signature verification are implemented. Bind verification to the order’s stored Razorpay ID, make confirmation idempotent, and verify the test-mode flow. [Payment routes](server/src/routes/payment.routes.ts)
 - [ ] Real-time order status display on user dashboard (`Order Received` → `In Kitchen` → `Sent to Delivery`). The order details page updates via Socket.IO and polling. The orders list fetches once. [App](client/src/App.tsx), [tracking page](client/src/pages/TrackingPage.tsx)

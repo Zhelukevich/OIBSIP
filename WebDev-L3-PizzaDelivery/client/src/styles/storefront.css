@@ -114,7 +114,7 @@
   padding: 42px clamp(26px, 6vw, 75px);
 }
 
-.store-hero h1, .store-section-heading h2, .store-build-link h2, .checkout h1, .builder h1 {
+.store-hero h1, .store-section-heading h2, .store-build-link h2, .checkout h1 {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 700;
   letter-spacing: -.055em;
@@ -169,7 +169,7 @@
 .pizza-card { display: flex; flex-direction: column; overflow: hidden; background: var(--store-white); border: 1px solid var(--store-line); border-radius: 20px; }
 .pizza-card img { width: 100%; height: auto; aspect-ratio: 1.62; object-fit: cover; background: #eadcc7; }
 .pizza-card__content { display: flex; flex: 1; flex-direction: column; padding: 17px 19px 18px; }
-.pizza-card h3, .checkout-line h2, .checkout-summary h2, .builder-panel h2 { font-size: 1.4rem; font-weight: 750; line-height: 1.2; }
+.pizza-card h3, .checkout-line h2, .checkout-summary h2 { font-size: 1.4rem; font-weight: 750; line-height: 1.2; }
 .pizza-card p { margin-block: 8px 14px; color: var(--store-muted); }
 .pizza-card__action { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
 .pizza-card__action strong { font-size: 1.25rem; }
@@ -188,16 +188,16 @@
 .store-footer .store-container { display: flex; align-items: center; justify-content: space-between; min-height: 84px; }
 .store-notice { margin-block: 10px; color: #943018; }
 
-.checkout, .builder { padding-block: 32px 72px; }
-.checkout h1, .builder h1 { margin: 12px 0 22px; font-size: clamp(2.9rem, 6vw, 4.4rem); line-height: 1; }
+.checkout { padding-block: 32px 72px; }
+.checkout h1 { margin: 12px 0 22px; font-size: clamp(2.9rem, 6vw, 4.4rem); line-height: 1; }
 .checkout-grid { display: grid; align-items: start; grid-template-columns: minmax(0, 1fr) minmax(285px, 340px); gap: 24px; }
 .checkout-lines { display: grid; gap: 13px; }
-.checkout-line, .checkout-summary, .checkout-empty, .builder-panel { border: 1px solid var(--store-line); border-radius: 20px; background: var(--store-white); }
+.checkout-line, .checkout-summary, .checkout-empty { border: 1px solid var(--store-line); border-radius: 20px; background: var(--store-white); }
 .checkout-line { display: flex; align-items: flex-start; gap: 16px; padding: 16px; }
 .checkout-line img { flex: 0 0 auto; width: clamp(65px, 12vw, 104px); height: auto; aspect-ratio: 1.15; border-radius: 12px; object-fit: cover; }
 .checkout-line__content { flex: 1; min-width: 0; }
 .checkout-line p { margin-top: 5px; color: var(--store-muted); }
-.checkout-line__actions, .checkout-total, .builder-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.checkout-line__actions, .checkout-total { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .checkout-line__actions { margin-top: 11px; }
 .checkout-quantity { display: inline-flex; align-items: center; border: 1px solid var(--store-line); border-radius: 100px; font-weight: 700; }
 .checkout-quantity button { width: 42px; min-height: 42px; color: var(--store-accent); font-size: 1.15rem; }
@@ -207,19 +207,6 @@
 .checkout-summary .store-button { width: 100%; }
 .checkout-empty { display: grid; justify-items: center; gap: 14px; padding: 45px 18px; }
 .checkout-empty h2 { font-size: 1.35rem; font-weight: 750; }
-
-.builder-panel { max-width: 800px; padding: clamp(16px, 4vw, 32px); }
-.builder-steps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-.builder-steps li { border: 1px solid var(--store-line); border-radius: 100px; padding: 5px 12px; color: var(--store-muted); }
-.builder-steps li[aria-current] { border-color: var(--store-accent); color: var(--store-accent); font-weight: 700; }
-.builder-panel p { margin-top: 8px; }
-.builder-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-block: 16px 24px; }
-.builder-options button { display: grid; gap: 4px; border: 1px solid var(--store-line); border-radius: 12px; padding: 12px; text-align: left; }
-.builder-options button[aria-pressed=true] { border-color: var(--store-accent); background: #fbede4; }
-.builder-options button span { color: var(--store-muted); }
-.builder-actions { flex-wrap: wrap; }
-.builder-actions > strong { font-size: 1.3rem; }
-.builder-actions > div { display: flex; gap: 8px; }
 
 @media (max-width: 850px) {
   .store-header__inner { grid-template-columns: auto 1fr; gap: 0 14px; padding-block: 9px 6px; }
