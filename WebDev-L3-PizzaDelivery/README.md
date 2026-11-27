@@ -45,23 +45,36 @@
 
 Route `/api` to Express. For live order updates, route `/socket.io` to Express with WebSocket upgrades enabled, or set `VITE_SOCKET_ORIGIN` to the public Express origin when building the client. Vite proxies both paths during local development.
 
-## Start
+## Local development
 
-```bash
-cd client
-npm install
-npm run dev
+From the repository root, install dependencies and create the local configuration if `server/.env.development` is missing.
 
-cd ../server
-npm install
-npm run dev
+```powershell
+npm ci --prefix client
+npm ci --prefix server
+if (!(Test-Path server/.env.development)) {
+  Copy-Item .env.development.example server/.env.development
+}
 ```
 
-Copy `.env.development.example` to `server/.env.development` and configure MongoDB, JWT, and Razorpay as needed. `npm run dev:server` loads that file.
+Start the local MongoDB replica set using [the Docker guide](docs/DOCKER.md). Run `npm run dev:server` and `npm run dev:client` in separate terminals. Open `http://localhost:5173`. Vite forwards `/api` and `/socket.io` to Express on port `5000`, so keep `CLIENT_URL=http://localhost:5173` and `PORT=5000` with the default Vite settings.
 
-For a file-based production setup, copy `.env.production.example` to `server/.env.production`. After building the server, `npm --prefix server start` loads that file. Variables set by the hosting provider take precedence over values in the file. Both environment files are ignored by Git.
+Use Razorpay test keys for local checkout and Mailpit for local email. Leaving `SMTP_HOST` empty enables the local email-verification link described below.
 
-Set a unique `JWT_SECRET` before starting the production server. To create the initial administrator, configure both `ADMIN_EMAIL` and `ADMIN_PASSWORD`. The password must have at least eight characters.
+## Production configuration
+
+Set the backend variables from [the production template](.env.production.example) in your hosting provider's environment settings. For a self-hosted deployment, you can copy the template to `server/.env.production` and fill it in there. Server process variables take precedence over file values. Git ignores the real environment files.
+
+| Variable | Production value |
+| --- | --- |
+| `CLIENT_URL` | The public frontend origin, such as `https://pizza.example.com`. Express and Socket.IO use it for CORS, and account emails use it for links. |
+| `MONGODB_URI` | A separate production MongoDB database on a replica set, such as MongoDB Atlas. Orders use transactions. |
+| `JWT_SECRET` | A unique random secret of at least 32 characters. Generate it with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. |
+| `PORT` | The port supplied by your hosting provider, or `5000` by default. |
+
+Configure SMTP for registration and password recovery, and configure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` for checkout. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` to create the initial administrator. The password must have at least eight characters.
+
+From the root, run `npm run build`, deploy `client/dist` as static files, and start the backend with `npm start`. The start command selects production and reads only the production environment file when present. Configure the frontend host to serve `index.html` for client routes and forward `/api` and `/socket.io` to Express as described above. Keep backend credentials in the server environment. Vite variables prefixed with `VITE_` are public and embedded at build time.
 
 ## Email configuration
 
