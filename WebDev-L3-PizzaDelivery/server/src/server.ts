@@ -59,7 +59,9 @@ async function seedApplication() {
 }
 
 async function start() {
-  await mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/pizza-delivery");
+  await mongoose.connect(
+    process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/pizza-delivery?replicaSet=rs0&directConnection=true",
+  );
   await User.init();
   await seedApplication();
   startLowStockJob();
