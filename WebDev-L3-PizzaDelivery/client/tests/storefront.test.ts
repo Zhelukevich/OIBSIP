@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describePizza, getCartOrder, ingredientPrice, menu, updateCart } from "../src/storefront";
+import { describePizza, formatPrice, getCartOrder, ingredientPrice, menu, updateCart } from "../src/storefront";
 import type { CartLine, PizzaSelection } from "../src/storefront";
 import type { InventoryItem } from "../src/types";
 
@@ -10,6 +10,12 @@ function makeCatalog(): InventoryItem[] {
 }
 
 describe("storefront cart", () => {
+  it("shows storefront prices in dollars and preserves legacy rupee totals", () => {
+    const pizza = { kind: "menu", id: "classic" } as const;
+    expect(formatPrice(describePizza(pizza, makeCatalog()).price)).toBe("$12.00");
+    expect(formatPrice(1000, "INR")).toBe("₹1,000");
+  });
+
   it.each(menu)("can order $name only when its entire recipe is available", ({ id, recipe }) => {
     const pizza: PizzaSelection = { kind: "menu", id };
     const catalog = makeCatalog();

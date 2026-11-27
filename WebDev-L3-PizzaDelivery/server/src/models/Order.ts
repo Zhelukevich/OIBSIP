@@ -21,6 +21,7 @@ const orderSchema = new Schema(
       },
     ],
     total: { type: Number, required: true, min: 0 },
+    currency: { type: String, enum: ["USD", "INR"] },
     status: { type: String, enum: orderStatuses, default: "AWAITING_PAYMENT", index: true },
     statusHistory: [
       {

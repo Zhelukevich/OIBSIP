@@ -31,7 +31,7 @@ paymentRouter.post("/create", async (request: AuthRequest, response) => {
   });
   const paymentOrder = await razorpay.orders.create({
     amount: Math.round(order.total * 100),
-    currency: "INR",
+    currency: order.currency ?? "INR",
     receipt: order._id.toString(),
   });
   order.razorpayOrderId = paymentOrder.id;
@@ -40,6 +40,7 @@ paymentRouter.post("/create", async (request: AuthRequest, response) => {
     keyId: process.env.RAZORPAY_KEY_ID,
     paymentOrderId: paymentOrder.id,
     amount: paymentOrder.amount,
+    currency: paymentOrder.currency,
   });
 });
 

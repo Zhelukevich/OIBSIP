@@ -9,7 +9,7 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { BuilderPage } from "./pages/BuilderPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { BagIcon, StorefrontPage } from "./pages/StorefrontPage";
-import { getCartOrder, readCart, saveCart, updateCart } from "./storefront";
+import { formatPrice, getCartOrder, readCart, saveCart, updateCart } from "./storefront";
 import type { CartLine, PizzaSelection } from "./storefront";
 import "./styles/storefront.css";
 
@@ -61,7 +61,7 @@ function OrdersPage() {
         {orders.map((order) => (
           <Link key={order._id} to={`/orders/${order._id}`} className="rounded-cards border border-hairline bg-paper-white p-5">
             <div className="flex justify-between"><strong>Order #{order._id.slice(-6)}</strong><span>{order.status.replaceAll("_", " ")}</span></div>
-            <div className="mt-2 text-sm text-smoke">₹{order.total}</div>
+            <div className="mt-2 text-sm text-smoke">{formatPrice(order.total, order.currency ?? "INR")}</div>
           </Link>
         ))}
         {!orders.length && <p className="text-smoke">No orders yet.</p>}

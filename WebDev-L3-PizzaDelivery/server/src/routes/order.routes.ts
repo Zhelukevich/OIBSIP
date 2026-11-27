@@ -7,6 +7,7 @@ import { Order } from "../models/Order.js";
 
 export const orderRouter = Router();
 
+const ingredientPrice = 3;
 const createOrderSchema = z.object({
   ingredients: z.array(z.object({
     inventoryItem: z.string(),
@@ -40,13 +41,14 @@ orderRouter.post("/", requireVerifiedEmail, async (request: AuthRequest, respons
           throw new Error("One or more selected ingredients are unavailable");
         }
         resolved.push({ inventoryItem: item._id, name: item.name, quantity: selected.quantity });
-        total += selected.quantity * 250;
+        total += selected.quantity * ingredientPrice;
       }
 
       const [order] = await Order.create([{
         user: request.user!.id,
         ingredients: resolved,
         total,
+        currency: "USD",
         status: "AWAITING_PAYMENT",
         statusHistory: [{ status: "AWAITING_PAYMENT" }],
       }], { session });

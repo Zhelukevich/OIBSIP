@@ -1,4 +1,5 @@
 export type Role = "user" | "admin";
+export type Currency = "USD" | "INR";
 
 export interface User {
   id: string;
@@ -22,6 +23,7 @@ export interface Order {
   user?: { name: string; email: string } | string;
   ingredients: Array<{ inventoryItem: string; name: string; quantity: number }>;
   total: number;
+  currency?: Currency;
   status: string;
   statusHistory: Array<{ status: string; changedAt: string }>;
   createdAt: string;

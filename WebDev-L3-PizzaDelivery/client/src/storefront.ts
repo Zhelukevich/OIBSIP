@@ -1,15 +1,14 @@
-import type { InventoryItem } from "./types";
+import type { Currency, InventoryItem } from "./types";
 
-export const ingredientPrice = 250;
+export const ingredientPrice = 3;
 const cartKey = "slice_cart";
-const money = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
+const money = {
+  USD: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }),
+  INR: new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }),
+};
 
-export function formatPrice(value: number) {
-  return money.format(value);
+export function formatPrice(value: number, currency: Currency = "USD") {
+  return money[currency].format(value);
 }
 
 type Ingredient = Pick<InventoryItem, "type" | "name">;

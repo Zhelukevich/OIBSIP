@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { api } from "../services/api";
-import type { Order } from "../types";
+import { formatPrice } from "../storefront";
+import type { Currency, Order } from "../types";
 
 declare global {
   interface Window {
@@ -45,7 +46,7 @@ export function TrackingPage() {
     setError("");
     setPaying(true);
     try {
-      const { data } = await api.post("/payments/create", { orderId: id });
+      const { data } = await api.post<{ keyId: string; paymentOrderId: string; amount: number; currency: Currency }>("/payments/create", { orderId: id });
       if (!window.Razorpay) {
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -58,6 +59,7 @@ export function TrackingPage() {
       const razorpay = new window.Razorpay!({
         key: data.keyId,
         amount: data.amount,
+        currency: data.currency,
         order_id: data.paymentOrderId,
         name: "Slice Pizza",
         description: "Pizza order",
@@ -86,7 +88,7 @@ export function TrackingPage() {
   return (
     <main className="mx-auto max-w-[800px] px-5 py-10">
       <h1 className="mb-2 text-heading font-bold">Order #{order._id.slice(-6)}</h1>
-      <p className="mb-8 text-smoke">₹{order.total}</p>
+      <p className="mb-8 text-smoke">{formatPrice(order.total, order.currency ?? "INR")}</p>
       {order.status === "AWAITING_PAYMENT" && (
         <button className="mb-8 rounded-buttons bg-ember-orange px-6 py-3 font-bold text-white" onClick={pay} disabled={paying}>
           {paying ? "Opening checkout..." : "Pay with Razorpay"}
