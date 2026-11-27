@@ -131,7 +131,15 @@ test("checkout reuses the stored provider order and payment retries preserve ful
   });
 
   const { events, request } = await startApi(t);
-  const order = new Order({ _id: orderId, user: ownerId, total: 3, currency: "USD" });
+  const order = new Order({ _id: orderId, user: ownerId, total: 3, currency: "USD", createdAt: new Date() });
+  const originalFetch = globalThis.fetch;
+  let captureStatus = "authorized";
+  let captureAmount = 300;
+  t.mock.method(globalThis, "fetch", async (url, options) => {
+    if (url !== "https://api.razorpay.com/v1/payments/pay_test") return originalFetch(url, options);
+    return Response.json({ id: "pay_test", order_id: "order_saved", status: captureStatus,
+      amount: captureAmount, currency: "USD", amount_refunded: 0 });
+  });
   const createProviderOrder = t.mock.fn(async (fields) => {
     assert.deepEqual(fields, { amount: 300, currency: "USD", receipt: order.id });
     return { id: "order_saved" };
@@ -140,8 +148,9 @@ test("checkout reuses the stored provider order and payment retries preserve ful
     this.orders = { create: createProviderOrder };
   });
   t.mock.method(Order, "findOne", async (filter) => {
-    assert.equal(filter._id, order.id);
-    assert.equal(filter.user, ownerId);
+    assert.equal(filter._id.toString(), order.id);
+    if (filter.razorpayOrderId) assert.equal(filter.razorpayOrderId, order.razorpayOrderId);
+    else assert.equal(filter.user, ownerId);
     if (filter.razorpayPaymentId && filter.razorpayPaymentId !== order.razorpayPaymentId) return null;
     return new Order(order.toObject());
   });
@@ -169,6 +178,10 @@ test("checkout reuses the stored provider order and payment retries preserve ful
     });
   }
   assert.equal(createProviderOrder.mock.callCount(), 1);
+  order.createdAt = new Date(Date.now() - 16 * 60 * 1000);
+  const expiredCheckout = await request("/payments/create", jsonRequest("POST", token, { orderId }));
+  assert.equal(expiredCheckout.status, 409);
+  assert.equal(createProviderOrder.mock.callCount(), 1);
 
   const paymentId = "pay_test";
   const verify = (razorpayOrderId) => request("/payments/verify", jsonRequest("POST", token, {
@@ -178,6 +191,11 @@ test("checkout reuses the stored provider order and payment retries preserve ful
     razorpaySignature: createHmac("sha256", "payment-test-secret").update(`${razorpayOrderId}|${paymentId}`).digest("hex"),
   }));
   assert.equal((await verify("order_unrelated")).status, 400);
+  assert.equal((await verify("order_saved")).status, 409);
+  captureStatus = "captured";
+  captureAmount = 301;
+  assert.equal((await verify("order_saved")).status, 409);
+  captureAmount = 300;
   assert.equal(update.mock.callCount(), 1);
   const confirmed = await Promise.all([verify("order_saved"), verify("order_saved")]);
   assert.deepEqual(confirmed.map(({ status }) => status), [200, 200]);

@@ -74,6 +74,8 @@ Set the backend variables from [the production template](.env.production.example
 
 Configure SMTP for registration and password recovery, and configure `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` for checkout. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` to create the initial administrator. The password must have at least eight characters.
 
+Enable automatic capture in Razorpay and register `https://<api-host>/api/payments/webhook` for `payment.captured` events. Set `RAZORPAY_WEBHOOK_SECRET` to the secret used when creating that webhook. Unpaid orders reserve stock for 15 minutes. The server checks expired orders against Razorpay every minute and restores stock when payment has not been captured. The webhook initiates a refund if Razorpay captures payment after stock has been released. [Razorpay webhook setup](https://razorpay.com/docs/webhooks/setup-edit-payments/)
+
 From the root, run `npm run build`, deploy `client/dist` as static files, and start the backend with `npm start`. The start command selects production and reads only the production environment file when present. Configure the frontend host to serve `index.html` for client routes and forward `/api` and `/socket.io` to Express as described above. Keep backend credentials in the server environment. Vite variables prefixed with `VITE_` are public and embedded at build time.
 
 ## Email configuration

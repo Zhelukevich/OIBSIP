@@ -5,8 +5,10 @@ import mongoose from "mongoose";
 import { createApp } from "./app.js";
 import { ConfigurationError, getServerConfig } from "./config.js";
 import { startLowStockJob } from "./jobs/lowStock.js";
+import { startReservationJob } from "./jobs/reservations.js";
 import { logFailure } from "./middleware/errors.js";
 import { Inventory } from "./models/Inventory.js";
+import { Order } from "./models/Order.js";
 import { User } from "./models/User.js";
 import { attachOrderSockets } from "./realtime/orders.js";
 import { seedAdministrator, seedInventory } from "./services/seed.js";
@@ -14,7 +16,7 @@ import { seedAdministrator, seedInventory } from "./services/seed.js";
 async function start() {
   const { port, clientOrigin, mongoUri } = getServerConfig();
   await mongoose.connect(mongoUri);
-  await Promise.all([User.init(), Inventory.init()]);
+  await Promise.all([User.init(), Inventory.init(), Order.init()]);
   await seedAdministrator();
   await seedInventory();
 
@@ -25,6 +27,7 @@ async function start() {
   httpServer.listen(port);
   await listening;
   const stopStockJob = startLowStockJob();
+  const stopReservationJob = startReservationJob(app);
   console.log(`Server listening on port ${port}`);
 
   let stopping = false;
@@ -36,7 +39,7 @@ async function start() {
       process.exit(1);
     }, 10_000);
     try {
-      await Promise.all([io.close(), stopStockJob()]);
+      await Promise.all([io.close(), stopStockJob(), stopReservationJob()]);
       await mongoose.disconnect();
     } catch (error) {
       logFailure("Failed to shut down server", error);

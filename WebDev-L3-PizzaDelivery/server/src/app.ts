@@ -7,12 +7,13 @@ import { adminRouter } from "./routes/admin.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { catalogRouter } from "./routes/catalog.routes.js";
 import { orderRouter } from "./routes/order.routes.js";
-import { paymentRouter } from "./routes/payment.routes.js";
+import { paymentRouter, paymentWebhook } from "./routes/payment.routes.js";
 
 export function createApp(clientOrigin = new URL(getClientUrl()).origin) {
   const app = express();
   app.disable("x-powered-by");
   app.use(cors({ origin: clientOrigin, credentials: true }));
+  app.post("/api/payments/webhook", express.raw({ type: "application/json", limit: "1mb" }), paymentWebhook);
   app.use(express.json({ limit: "1mb" }));
 
   app.get("/api/health", (_request, response) => {

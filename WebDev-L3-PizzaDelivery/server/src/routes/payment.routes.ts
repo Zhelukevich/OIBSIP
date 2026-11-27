@@ -4,7 +4,7 @@ import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { asyncHandler, HttpError } from "../middleware/errors.js";
 import { publishOrderStatus } from "../realtime/orders.js";
 import { objectIdSchema } from "../schemas/ids.js";
-import { confirmPayment, createCheckout } from "../services/payments.js";
+import { confirmPayment, createCheckout, handlePaymentWebhook } from "../services/payments.js";
 
 const checkoutSchema = z.object({ orderId: objectIdSchema });
 const verificationSchema = checkoutSchema.extend({
@@ -15,6 +15,12 @@ const verificationSchema = checkoutSchema.extend({
 
 export const paymentRouter = Router();
 paymentRouter.use(requireAuth);
+
+export const paymentWebhook = asyncHandler(async (request, response) => {
+  const order = await handlePaymentWebhook(request.body, request.get("X-Razorpay-Signature") ?? "");
+  if (order) publishOrderStatus(request.app, order);
+  response.sendStatus(204);
+});
 
 paymentRouter.post("/create", asyncHandler(async (request: AuthRequest, response) => {
   const parsed = checkoutSchema.safeParse(request.body);

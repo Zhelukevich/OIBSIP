@@ -37,4 +37,7 @@ const orderSchema = new Schema(
   { timestamps: true },
 );
 
+orderSchema.index({ status: 1, createdAt: 1 });
+orderSchema.index({ razorpayOrderId: 1 }, { sparse: true });
+
 export const Order = model("Order", orderSchema);
