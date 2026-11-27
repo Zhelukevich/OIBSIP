@@ -17,6 +17,11 @@ Run these commands from `WebDev-L3-PizzaDelivery/`.
 
 Use TypeScript, two-space indentation, double quotes, and semicolons. Use PascalCase for React components and Mongoose models, camelCase for functions, and `<feature>.routes.ts` for Express route modules. Include `.js` extensions on relative server imports for NodeNext resolution. Follow nearby formatting. The project has no lint script or formatter configuration.
 
+## Frontend Skills
+
+- Read [pizza-frontend-refactor](.github/skills/pizza-frontend-refactor/SKILL.md) for frontend reviews and refactors involving React components, state, API requests, or regression coverage.
+- Read [pizza-tailwind-ui](.github/skills/pizza-tailwind-ui/SKILL.md) for Tailwind v4 tokens, shared controls, and responsive or interactive styling.
+
 ## Testing
 
 Run `npm test` to compile the server and run Node's test runner. Use `npm --prefix client test -- --run` for a single Vitest run. There is no configured coverage threshold. Add server cases in `server/tests/unit/` or `server/tests/integration/` as `*.test.js` and client cases in `client/tests/` as `*.test.ts` or `*.test.tsx`.
