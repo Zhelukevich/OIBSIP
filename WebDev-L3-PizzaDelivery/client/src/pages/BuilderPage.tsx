@@ -5,6 +5,7 @@ import type { PizzaSelection } from "../storefront";
 import type { InventoryItem } from "../types";
 import { Button } from "../components/Button";
 import { PageContainer } from "../components/PageContainer";
+import { PizzaPreview } from "../features/builder/PizzaPreview";
 import "../styles/builder.css";
 
 const steps = [
@@ -37,6 +38,10 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
   const finalStep = active.type === "vegetable";
   const ingredients = new Map(catalog?.filter((item) => item.isActive).map((item) => [item._id, item]));
   const ingredientIds = steps.flatMap(({ type }) => selected[type]);
+  const previewIngredients = ingredientIds.flatMap((id) => {
+    const item = ingredients.get(id);
+    return item ? [item] : [];
+  });
   const completed = steps.map(({ type }) => selected[type].length > 0 && selected[type].every((id) => (
     (ingredients.get(id)?.quantity ?? 0) > 0
   )));
@@ -84,7 +89,8 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
       {!catalog && !catalogError && <p role="status">Loading ingredients…</p>}
       {catalog && (
         <div className="builder-layout">
-          <aside className="builder-summary counter-panel" aria-label="Your recipe">
+          <aside className="builder-summary counter-panel" aria-label="Your recipe and pizza preview">
+            <PizzaPreview ingredients={previewIngredients} />
             <details open={recipeOpen} onToggle={(event) => setRecipeOpen(event.currentTarget.open)}>
               <summary>Your recipe <strong>{total}</strong></summary>
               <dl>

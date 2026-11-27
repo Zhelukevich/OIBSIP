@@ -91,6 +91,139 @@
   border-top: 4px solid var(--color-olive);
 }
 
+.pizza-preview {
+  padding-block: 4px 12px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.pizza-preview__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pizza-preview__photo img,
+.pizza-preview__board {
+  width: 100%;
+  aspect-ratio: 1.75;
+  border-radius: var(--radius-inputs);
+  overflow: hidden;
+}
+
+.pizza-preview__photo img {
+  height: auto;
+  object-fit: cover;
+  object-position: center 49%;
+}
+
+.pizza-preview figcaption {
+  margin-top: 6px;
+  color: var(--color-muted);
+  font-size: .82rem;
+}
+
+.pizza-preview__board {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  background: repeating-linear-gradient(45deg, transparent 0 12px, rgb(130 94 60 / 5%) 12px 13px), var(--color-paper);
+  color: var(--color-muted);
+}
+
+.pizza-preview__pie {
+  --crust: #de9b47;
+  --inner-crust: #f5d293;
+  --sauce-edge: 11%;
+  position: relative;
+  width: 49%;
+  aspect-ratio: 1;
+  border: 2px solid #aa672e;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 10% 36%, #a75b2e 0 2%, transparent 3%),
+    radial-gradient(ellipse at 58% 91%, #93502a 0 2%, transparent 3.5%),
+    radial-gradient(ellipse at 83% 17%, #a25f34 0 2%, transparent 3%),
+    radial-gradient(circle at 42% 36%, var(--inner-crust) 0 55%, var(--crust) 79%);
+  box-shadow: inset 0 -3px 4px #ad6d3f, 0 5px 10px rgb(80 48 23 / 25%);
+}
+
+.pizza-preview__pie[data-crust="Cheesy Crust" i] { --crust: #d58337; --sauce-edge: 14%; }
+.pizza-preview__pie[data-crust="Thin Crust" i] { --crust: #c18746; --sauce-edge: 7%; }
+.pizza-preview__pie[data-crust="Whole Wheat" i] { --crust: #a36c3b; --inner-crust: #d5a869; }
+.pizza-preview__pie[data-crust="Gluten Free" i] { --crust: #ca9254; --inner-crust: #f5dfb6; }
+
+.pizza-preview__sauce,
+.pizza-preview__cheese,
+.pizza-preview__toppings {
+  position: absolute;
+  inset: var(--sauce-edge);
+  border-radius: 50%;
+}
+
+.pizza-preview__sauce {
+  --sauce: #b43b25;
+  background: radial-gradient(ellipse at 35% 22%, rgb(255 237 183 / 25%), transparent 55%), var(--sauce);
+  box-shadow: inset 0 0 0 1px rgb(85 35 14 / 28%);
+}
+
+.pizza-preview__sauce[data-sauce="Barbecue" i] { --sauce: #793e2b; }
+.pizza-preview__sauce[data-sauce="Pesto" i] { --sauce: #597839; }
+.pizza-preview__sauce[data-sauce="Hot Garlic" i] { --sauce: #d5622b; }
+.pizza-preview__sauce[data-sauce="White Garlic" i] { --sauce: #e9cc89; }
+
+.pizza-preview__cheese {
+  --cheese: #fff1c2;
+  --toast: #d48a40;
+  inset: calc(var(--sauce-edge) + 5%);
+  background:
+    radial-gradient(ellipse at 32% 28%, var(--toast) 2%, transparent 6%),
+    radial-gradient(ellipse at 68% 67%, var(--toast) 2%, transparent 7%),
+    radial-gradient(ellipse at 76% 20%, var(--toast) 2%, transparent 5%),
+    radial-gradient(ellipse at 44% 87%, var(--toast) 3%, transparent 8%),
+    radial-gradient(circle at 40% 45%, var(--cheese) 58%, transparent 100%);
+}
+
+.pizza-preview__cheese[data-cheese="Cheddar" i] { --cheese: #f8bc51; }
+.pizza-preview__cheese[data-cheese="Parmesan" i] { --cheese: #f4d392; }
+
+.pizza-preview__toppings { inset: calc(var(--sauce-edge) + 7%); }
+.pizza-preview__toppings[data-topping="Mushroom" i] { rotate: 35deg; }
+.pizza-preview__toppings[data-topping="Corn" i] { rotate: 72deg; }
+.pizza-preview__toppings[data-topping="Olive" i] { rotate: 108deg; }
+.pizza-preview__toppings[data-topping="Onion" i] { rotate: 148deg; }
+
+.pizza-preview__toppings span {
+  position: absolute;
+  width: 19%;
+  height: 10%;
+  border-radius: 65% 35% 65% 35%;
+  background: #a83021;
+  box-shadow: inset 0 -1px 2px rgb(51 23 12 / 38%);
+}
+
+.pizza-preview__toppings span:nth-child(1) { inset: 6% auto auto 44%; rotate: 14deg; }
+.pizza-preview__toppings span:nth-child(2) { inset: 29% 8% auto auto; rotate: 70deg; }
+.pizza-preview__toppings span:nth-child(3) { inset: auto 19% 13% auto; rotate: -22deg; }
+.pizza-preview__toppings span:nth-child(4) { inset: auto auto 15% 16%; rotate: 48deg; }
+.pizza-preview__toppings span:nth-child(5) { inset: 30% auto auto 9%; rotate: -38deg; }
+.pizza-preview__toppings span:nth-child(6) { inset: 48% auto auto 41%; rotate: 101deg; }
+.pizza-preview__toppings[data-topping="Mushroom" i] span { background: #956a4c; border-radius: 60% 60% 25% 25%; }
+.pizza-preview__toppings[data-topping="Corn" i] span { width: 9%; height: 10%; background: #ffd74d; border-radius: 42%; }
+.pizza-preview__toppings[data-topping="Olive" i] span { width: 13%; height: 13%; border: 2px solid #33271e; border-radius: 50%; background: transparent; box-shadow: none; }
+.pizza-preview__toppings[data-topping="Onion" i] span { border-top: 2px solid #8b3359; background: transparent; box-shadow: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pizza-preview__pie, .pizza-preview__sauce, .pizza-preview__cheese, .pizza-preview__toppings {
+    animation: pizza-layer-in 220ms ease-out;
+  }
+}
+
+@keyframes pizza-layer-in {
+  from { opacity: .35; transform: scale(.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .builder-summary summary {
   display: flex;
   min-height: 44px;
@@ -118,4 +251,6 @@
   .builder-steps button { flex-direction: column; min-height: 50px; font-size: .75rem; }
   .builder-options { grid-template-columns: 1fr; }
   .builder-option { min-height: 52px; }
+  .pizza-preview__photo img, .pizza-preview__board { aspect-ratio: 2.15; }
+  .pizza-preview__pie { width: 40%; }
 }
