@@ -6,6 +6,8 @@ import { api } from "../services/api";
 import { formatPrice } from "../storefront";
 import type { Order } from "../types";
 
+const ordersRefreshInterval = 15000;
+
 type OrdersState =
   | { status: "loading" }
   | { status: "error" }
@@ -46,14 +48,27 @@ export function OrdersPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    api.get<{ orders: Order[] }>("/orders/mine", { signal: controller.signal })
-      .then(({ data }) => {
-        if (!controller.signal.aborted) setState({ status: "loaded", orders: data.orders });
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setState({ status: "error" });
-      });
-    return () => controller.abort();
+    const { signal } = controller;
+    let refreshTimer: number | undefined;
+
+    async function loadOrders() {
+      try {
+        const { data } = await api.get<{ orders: Order[] }>("/orders/mine", { signal });
+        if (!signal.aborted) setState({ status: "loaded", orders: data.orders });
+      } catch {
+        if (!signal.aborted) {
+          setState((current) => current.status === "loaded" ? current : { status: "error" });
+        }
+      } finally {
+        if (!signal.aborted) refreshTimer = window.setTimeout(loadOrders, ordersRefreshInterval);
+      }
+    }
+
+    void loadOrders();
+    return () => {
+      controller.abort();
+      window.clearTimeout(refreshTimer);
+    };
   }, [attempt]);
 
   function retry() {
