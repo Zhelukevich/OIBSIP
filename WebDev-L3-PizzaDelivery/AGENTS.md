@@ -2,7 +2,7 @@
 
 ## Project Structure
 
-The pizza delivery app lives in `WebDev-L3-PizzaDelivery/`. The React and Vite frontend lives in `client/src/`, with pages in `pages/`, shared API access in `services/api.ts`, and styles in `styles/`. Put imported assets in `client/src/assets/` and static files in `client/public/`. The Express and MongoDB backend starts at `server/src/server.ts`. API handlers, Mongoose models, authentication middleware, and scheduled jobs live in `routes/`, `models/`, `middleware/`, and `jobs/` under `server/src/`. See `CHECKLIST.md` for feature requirements and `client/DESIGN.md` for UI guidance.
+The pizza delivery app lives in `WebDev-L3-PizzaDelivery/`. The React and Vite frontend lives in `client/src/`, with pages in `pages/`, shared API access in `services/api.ts`, and styles in `styles/`. Put imported assets in `client/src/assets/` and static files in `client/public/`. The Express and MongoDB backend starts at `server/src/server.ts` and composes HTTP routes in `server/src/app.ts`. Routes, services, Mongoose models, middleware, and jobs live under `server/src/`. See `CHECKLIST.md` for feature requirements and `client/DESIGN.md` for UI guidance.
 
 ## Build and Local Development
 
@@ -16,6 +16,15 @@ Run these commands from `WebDev-L3-PizzaDelivery/`.
 ## Coding Style and Naming
 
 Use TypeScript, two-space indentation, double quotes, and semicolons. Use PascalCase for React components and Mongoose models, camelCase for functions, and `<feature>.routes.ts` for Express route modules. Include `.js` extensions on relative server imports for NodeNext resolution. Follow nearby formatting. The project has no lint script or formatter configuration.
+
+## Backend Skills
+
+- Read [pizza-backend](.github/skills/pizza-backend/SKILL.md) when implementing or refactoring server code.
+- Read [pizza-backend-review](.github/skills/pizza-backend-review/SKILL.md) for server code review and regression verification.
+- Read [pizza-payments](.github/skills/pizza-payments/SKILL.md) for Razorpay checkout, webhook handling, or payment-related stock changes.
+- Read [pizza-realtime](.github/skills/pizza-realtime/SKILL.md) for Socket.IO authentication, subscriptions, order status events, or the polling fallback.
+
+Repository agent profiles are available for [backend implementation](.github/agents/pizza-backend.agent.md) and [backend review](.github/agents/pizza-backend-review.agent.md).
 
 ## Frontend Skills
 

@@ -26,18 +26,18 @@ npm run test
 
 Local ports are `5173` for Vite and `5000` for Express. Vite proxies `/api` to port `5000`.
 
-Local MongoDB is a Docker container named `pizza-mongo` on port `27017`. Put the application environment values in `server/.env`; repository templates are in `.env.example`. Docker setup is documented in `docs/DOCKER.md`.
+Local MongoDB runs as a replica set in the `pizza-mongo-rs` Docker container on port `27017`. Use `server/.env.development` for local configuration. The repository includes `.env.development.example` and `.env.production.example`. See [Docker setup](../docs/DOCKER.md).
 
 ## Architecture
 
 - `client/` is a React 18, TypeScript, Vite application using React Router, Tailwind CSS, React Hook Form, Zod, Axios, and `socket.io-client`.
 - `server/` is an Express, TypeScript, Node application using Mongoose, JWT, Razorpay, Nodemailer, `node-cron`, Zod, and Socket.IO.
-- `server/src/server.ts` owns application startup: dotenv loading, MongoDB connection, catalog/admin seeding, Express routes, cron startup, HTTP server creation, and Socket.IO setup.
+- `server/src/server.ts` manages startup and shutdown. `server/src/app.ts` composes middleware, routes, and error handling. Services hold account, order, and payment operations.
 - `client/src/App.tsx` owns top-level routing and the main user-facing shell. `TrackingPage.tsx` and `AdminPage.tsx` provide order tracking/payment and admin operations.
 - `client/src/services/api.ts` creates the shared Axios instance and adds the JWT Bearer token from `localStorage`.
 - `server/src/routes/` exposes auth, catalog, order, admin, and payment endpoints. Protected routes use `requireAuth`; admin routes also use `requireAdmin`.
 - `server/src/models/` contains Mongoose documents for users, inventory, and orders.
-- Status updates are emitted through `app.get("io")` after a persisted state change.
+- Status updates are emitted through `publishOrderStatus` after a persisted state change.
 - The client joins `order:<id>` rooms and also polls every 15 seconds as the tracking fallback.
 
 ## Repository conventions
@@ -51,5 +51,6 @@ Local MongoDB is a Docker container named `pizza-mongo` on port `27017`. Put the
 - Razorpay amount calculation and signature verification happen server-side. Browser success is not sufficient to mark an order paid.
 - Valid order transitions are enforced before status persistence and a `statusHistory` entry is appended with the change.
 - Socket.IO events are named `order.statusChanged`; Socket.IO rooms use `order:<orderId>`.
-- Update `.env.example` and `docs/DOCKER.md` when environment or local database setup changes.
+- Update the relevant environment template or [Docker setup](../docs/DOCKER.md) when that configuration changes.
 - Feature scope and visual references are in `CHECKLIST.md` and `client/DESIGN.md`; implementation intent is summarized in `docs/IMPLEMENTATION_PLAN.md`.
+- Use the [backend skill links in AGENTS.md](../AGENTS.md#backend-skills) for implementation, review, payments, and real-time work.
