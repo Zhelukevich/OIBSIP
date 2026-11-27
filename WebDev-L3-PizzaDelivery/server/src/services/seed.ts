@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
-import { ConfigurationError } from "../config.js";
+import { ConfigurationError, getAdminEmail } from "../config.js";
 import { isDuplicateKey } from "../middleware/errors.js";
 import { Inventory } from "../models/Inventory.js";
 import { User } from "../models/User.js";
 
-export async function seedApplication() {
+export async function seedInventory() {
   const catalog = [
     ["base", "Classic Hand Tossed", 100],
     ["base", "Thin Crust", 100],
@@ -32,9 +32,18 @@ export async function seedApplication() {
       { upsert: true },
     ),
   ));
+}
 
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (!email || await User.exists({ email })) return;
+export async function seedAdministrator() {
+  const email = getAdminEmail();
+  if (!email) return;
+
+  const conflictMessage = "ADMIN_EMAIL belongs to a customer account. Configure a different administrator email.";
+  const existing = await User.findOne({ email }).select("role");
+  if (existing) {
+    if (existing.role !== "admin") throw new ConfigurationError(conflictMessage);
+    return;
+  }
 
   const password = process.env.ADMIN_PASSWORD;
   if (!password || password.length < 8 || password === "Admin123!") {
@@ -50,5 +59,6 @@ export async function seedApplication() {
     });
   } catch (error) {
     if (!isDuplicateKey(error)) throw error;
+    if (!await User.exists({ email, role: "admin" })) throw new ConfigurationError(conflictMessage);
   }
 }

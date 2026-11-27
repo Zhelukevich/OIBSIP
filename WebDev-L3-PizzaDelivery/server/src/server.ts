@@ -9,13 +9,14 @@ import { logFailure } from "./middleware/errors.js";
 import { Inventory } from "./models/Inventory.js";
 import { User } from "./models/User.js";
 import { attachOrderSockets } from "./realtime/orders.js";
-import { seedApplication } from "./services/seed.js";
+import { seedAdministrator, seedInventory } from "./services/seed.js";
 
 async function start() {
   const { port, clientOrigin, mongoUri } = getServerConfig();
   await mongoose.connect(mongoUri);
   await Promise.all([User.init(), Inventory.init()]);
-  await seedApplication();
+  await seedAdministrator();
+  await seedInventory();
 
   const app = createApp(clientOrigin);
   const httpServer = createServer(app);

@@ -37,7 +37,7 @@ Audit on 2026-11-27. Checked items have a complete implementation for the checkl
 ---
 
 ### 🛡️ Admin Side
-- [ ] Separate admin login *(not accessible from the user registration flow)*. Admin accounts are seeded separately, and admin routes check the role. Both roles still share the same login page and endpoint. [Server](server/src/server.ts), [app](client/src/App.tsx)
+- [x] Admin accounts are seeded separately, public registration creates customer accounts, and admin routes check the role. Customers and administrators sign in through the shared login page and endpoint. [Server](server/src/server.ts), [app](client/src/App.tsx)
 - [x] Inventory dashboard showing current stock of **pizza bases**, **sauces**, **cheeses**, and **vegetables**. [Admin page](client/src/pages/AdminPage.tsx)
 - [ ] Stock automatically decremented after each order. Order creation reserves stock in a transaction. A failed or abandoned payment needs to release its reservation. [Order routes](server/src/routes/order.routes.ts)
 - [x] Manual stock update capability for each inventory item. [Admin page](client/src/pages/AdminPage.tsx), [admin routes](server/src/routes/admin.routes.ts)

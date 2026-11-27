@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
-import { getClientUrl } from "../config.js";
+import { getAdminEmail, getClientUrl } from "../config.js";
 import { HttpError, isDuplicateKey, logFailure } from "../middleware/errors.js";
 import { User } from "../models/User.js";
 import { canSendEmail, sendEmail } from "./email.js";
@@ -14,11 +14,12 @@ function requireVerificationDelivery() {
 }
 
 export async function registerAccount({ name, email, password }: { name: string; email: string; password: string }) {
+  if (email === getAdminEmail()) throw new HttpError(409, "Email is already registered");
   requireVerificationDelivery();
   const verification = createEmailVerification();
   const passwordHash = await bcrypt.hash(password, 12);
   try {
-    await User.create({ name, email, passwordHash, ...verification.fields });
+    await User.create({ name, email, passwordHash, role: "user", ...verification.fields });
   } catch (error) {
     if (isDuplicateKey(error)) throw new HttpError(409, "Email is already registered");
     throw error;

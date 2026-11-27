@@ -8,6 +8,10 @@ export function getClientUrl() {
   return process.env.CLIENT_URL?.trim() || developmentClientUrl;
 }
 
+export function getAdminEmail() {
+  return process.env.ADMIN_EMAIL?.trim().toLowerCase();
+}
+
 export function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
   if (process.env.NODE_ENV === "production" && (!secret?.trim() || secret.trim() === developmentSecret)) {

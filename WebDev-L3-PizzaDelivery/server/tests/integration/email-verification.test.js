@@ -5,7 +5,10 @@ import test from "node:test";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { createApp } from "../../dist/app.js";
+import { ConfigurationError } from "../../dist/config.js";
+import { Inventory } from "../../dist/models/Inventory.js";
 import { User } from "../../dist/models/User.js";
+import { seedAdministrator } from "../../dist/services/seed.js";
 
 function setEnvironment(t, values) {
   for (const [name, value] of Object.entries(values)) {
@@ -87,6 +90,7 @@ test("registration sends an expiring link that can be used only once, then check
   const login = await request("/auth/login", { body: credentials });
   assert.equal(login.status, 200);
   const { token, user } = await login.json();
+  assert.equal(user.role, "user");
   assert.equal(user.emailVerified, false);
   assert.equal((await request("/orders", { body: {} })).status, 401);
   assert.equal((await request("/orders", { body: {}, token })).status, 403);
@@ -157,4 +161,58 @@ test("only development exposes a verification link when SMTP is absent", async (
   assert.equal(verificationUrl, `http://localhost:5173/verify-email#token=${verificationToken}`);
   assert.match(verificationToken, /^[a-f0-9]{64}$/);
   assert.equal(transport.mock.callCount(), 0);
+});
+
+test("administrator email is reserved for seeding and the seeded account uses the shared login", async (t) => {
+  const password = "seeded-admin-password";
+  const email = "admin@example.test";
+  setEnvironment(t, { ADMIN_EMAIL: " ADMIN@example.test ", ADMIN_PASSWORD: password });
+  let account;
+  const create = t.mock.method(User, "create", async (fields) => {
+    if (account) throw Object.assign(new Error("Duplicate email"), { code: 11000 });
+    account = new User(fields);
+    return account;
+  });
+  t.mock.method(User, "findOne", (filter) => ({
+    select: async () => account?.email === filter.email ? account : null,
+  }));
+  t.mock.method(User, "exists", async (filter) =>
+    account?.email === filter.email && account.role === filter.role ? { _id: account._id } : null,
+  );
+  t.mock.method(Inventory, "find", () => ({ sort: async () => [] }));
+  const request = await startApi(t);
+
+  const registration = await request("/auth/register", { body: { ...credentials, email: email.toUpperCase() } });
+  assert.equal(registration.status, 409);
+  assert.equal(create.mock.callCount(), 0);
+
+  await Promise.all([seedAdministrator(), seedAdministrator()]);
+  const initialHash = account.passwordHash;
+  await seedAdministrator();
+  assert.equal(create.mock.callCount(), 2);
+  assert.equal(account.passwordHash, initialHash);
+
+  assert.equal((await request("/auth/login", { body: { email, password: credentials.password } })).status, 401);
+  const login = await request("/auth/login", { body: { email: email.toUpperCase(), password } });
+  assert.equal(login.status, 200);
+  const { token, user } = await login.json();
+  assert.equal(user.role, "admin");
+  assert.equal(user.emailVerified, true);
+  const inventory = await request("/admin/inventory", { token });
+  assert.equal(inventory.status, 200);
+  assert.deepEqual(await inventory.json(), { items: [] });
+});
+
+test("seeding cannot take over an existing customer email", async (t) => {
+  const email = "fan@example.test";
+  setEnvironment(t, { ADMIN_EMAIL: email, ADMIN_PASSWORD: "seeded-admin-password" });
+  const account = new User({ name: "Pizza fan", email, passwordHash: "existing-customer-hash" });
+  const create = t.mock.method(User, "create");
+  t.mock.method(User, "findOne", () => ({ select: async () => account }));
+
+  await assert.rejects(seedAdministrator, (error) =>
+    error instanceof ConfigurationError && error.message.includes("ADMIN_EMAIL belongs to a customer account"),
+  );
+  assert.equal(create.mock.callCount(), 0);
+  assert.equal(account.role, "user");
 });

@@ -134,7 +134,7 @@ export function App() {
         <Route path="/reset-password" element={<ResetPasswordPage key={location.hash} />} />
         <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
         <Route path="/orders/:id" element={user ? <TrackingPage /> : <Navigate to="/login" />} />
-        <Route path="/admin" element={user?.role === "admin" ? <AdminPage /> : <Navigate to="/" />} />
+        <Route path="/admin" element={user?.role === "admin" ? <AdminPage /> : <Navigate to={user ? "/" : "/login"} replace />} />
       </Routes>
     </Shell>
   );
