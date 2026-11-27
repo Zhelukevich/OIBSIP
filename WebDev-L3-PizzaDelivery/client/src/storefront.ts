@@ -119,13 +119,12 @@ export function describePizza(pizza: PizzaSelection, catalog: InventoryItem[]) {
 }
 
 export function getCartOrder(lines: CartLine[], catalog: InventoryItem[]) {
-  const stock = new Map(catalog.map((item) => [item._id, item.quantity]));
   const order = new Map<string, number>();
   for (const { pizza, quantity } of lines) {
     for (const item of describePizza(pizza, catalog).ingredients) {
-      if (!item) return null;
+      if (!item?.isActive) return null;
       const count = (order.get(item._id) ?? 0) + quantity;
-      if (count > (stock.get(item._id) ?? 0)) return null;
+      if (count > item.quantity) return null;
       order.set(item._id, count);
     }
   }

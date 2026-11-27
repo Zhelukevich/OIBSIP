@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { describePizza, formatPrice, menu } from "../storefront";
+import { describePizza, formatPrice, getCartOrder, menu } from "../storefront";
 import type { PizzaSelection } from "../storefront";
 import type { InventoryItem } from "../types";
 
@@ -39,11 +39,12 @@ export function StorefrontPage({ catalog, canAdd, onAdd, catalogError, onRetry }
             We couldn’t check ingredient availability. <button className="store-text-link" onClick={onRetry}>Try again</button>
           </p>
         )}
+        {!catalog && !catalogError && <p className="sr-only" role="status">Checking pizza availability…</p>}
         <div className="store-menu__grid">
           {menu.map(({ id }) => {
             const pizza = { kind: "menu", id } as const;
             const item = describePizza(pizza, catalog ?? []);
-            const available = item.ingredients.every((ingredient) => ingredient && ingredient.quantity > 0);
+            const available = Boolean(catalog && getCartOrder([{ pizza, quantity: 1 }], catalog));
             const addable = available && canAdd(pizza);
             return (
               <article className="pizza-card" key={id}>

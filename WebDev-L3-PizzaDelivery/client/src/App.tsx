@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api } from "./services/api";
 import type { InventoryItem, Order, User } from "./types";
 import { AuthPage } from "./pages/AuthPage";
@@ -100,6 +100,10 @@ export function App() {
   useEffect(() => { saveCart(cart); }, [cart]);
 
   useEffect(() => {
+    if (!["/", "/build", "/checkout"].some((path) => matchPath(path, location.pathname))) return;
+
+    setCatalog(null);
+    setCatalogError(false);
     const controller = new AbortController();
     api.get<{ items: InventoryItem[] }>("/catalog", { signal: controller.signal })
       .then(({ data }) => {
@@ -107,16 +111,12 @@ export function App() {
         if (!controller.signal.aborted) setCatalog(data.items);
       })
       .catch(() => {
-        if (!controller.signal.aborted) {
-          setCatalog(null);
-          setCatalogError(true);
-        }
+        if (!controller.signal.aborted) setCatalogError(true);
       });
     return () => controller.abort();
-  }, [catalogRevision]);
+  }, [catalogRevision, location.pathname]);
 
   function refreshCatalog() {
-    setCatalogError(false);
     setCatalogRevision((revision) => revision + 1);
   }
 
