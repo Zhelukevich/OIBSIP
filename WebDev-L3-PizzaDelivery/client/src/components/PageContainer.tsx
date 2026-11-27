@@ -8,5 +8,6 @@ const widths = {
 export function PageContainer({
   as: Element = "main", width = "page", className = "", ...props
 }: ComponentPropsWithoutRef<"main"> & { as?: "main" | "div"; width?: keyof typeof widths }) {
-  return <Element {...props} className={`mx-auto w-[calc(100%_-_48px)] max-[650px]:w-[calc(100%_-_28px)] ${widths[width]} ${className}`} />;
+  const main = Element === "main" ? { id: "main-content", tabIndex: -1 } : {};
+  return <Element {...main} {...props} className={`mx-auto w-[calc(100%_-_48px)] max-[650px]:w-[calc(100%_-_28px)] ${widths[width]} ${className}`} />;
 }

@@ -102,7 +102,7 @@ export function describePizza(pizza: PizzaSelection, catalog: InventoryItem[]) {
     return {
       name: item.name,
       price: item.recipe.length * ingredientPrice,
-      image: `/pizza/${item.id}.jpg`,
+      image: `/pizza/${item.id}.webp`,
       details: item.description,
       ingredients: item.recipe.map(({ type, name }) => catalog.find((entry) => entry.type === type && entry.name === name)),
     };

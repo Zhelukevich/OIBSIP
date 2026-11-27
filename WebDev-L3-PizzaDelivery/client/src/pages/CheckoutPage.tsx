@@ -46,19 +46,19 @@ export function CheckoutPage({ cart, catalog, catalogError, user, onChange, onOr
 
   return (
     <PageContainer className="checkout">
-      <Link className="action-link" to="/">← Back to menu</Link>
-      <h1>Your cart</h1>
+      <Link className="action-link" to="/#menu"><span aria-hidden="true">←</span> Back to menu</Link>
+      <h1 className="counter-title">Your cart</h1>
       {!lines.length ? (
-        <section className="checkout-empty">
+        <section className="checkout-empty counter-panel">
           <BagIcon />
           <h2>Your cart is empty</h2>
-          <ButtonLink to="/">Browse pizzas <span aria-hidden="true">→</span></ButtonLink>
+          <ButtonLink to="/#menu">Browse pizzas <span aria-hidden="true">→</span></ButtonLink>
         </section>
       ) : (
         <div className="checkout-grid">
           <ul className="checkout-lines" aria-label="Pizzas in your cart">
             {lines.map((line) => (
-              <li key={pizzaKey(line.pizza)} className="checkout-line">
+              <li key={pizzaKey(line.pizza)} className="checkout-line counter-panel">
                 {line.image && <img src={line.image} alt="" width="104" height="84" />}
                 <div className="checkout-line__content">
                   <h2>{line.name}</h2>
@@ -75,9 +75,12 @@ export function CheckoutPage({ cart, catalog, catalogError, user, onChange, onOr
               </li>
             ))}
           </ul>
-          <section className="checkout-summary" aria-labelledby="summary-title">
+          <section className="checkout-summary counter-panel" aria-labelledby="summary-title">
             <h2 id="summary-title">Order summary</h2>
             <p className="checkout-total"><span>Total</span><strong>{formatPrice(total)}</strong></p>
+            <p className="checkout-next">
+              {!user ? "Sign in to continue with this cart." : !user.emailVerified ? "Confirm your email before you pay." : "Review your order, then continue to secure payment."}
+            </p>
             {catalog && !ingredients && <p className="store-notice" role="alert">Some ingredients are out of stock. Adjust your cart to continue.</p>}
             {!catalog && (catalogError ? (
               <p className="store-notice" role="alert">We couldn’t check availability. <button className="action-link" onClick={onRetry}>Try again</button></p>

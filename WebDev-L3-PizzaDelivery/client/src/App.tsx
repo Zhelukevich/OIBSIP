@@ -1,43 +1,59 @@
-import { useEffect, useState } from "react";
-import { Link, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Link, matchPath, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api } from "./services/api";
 import type { InventoryItem, User } from "./types";
-import { AuthPage } from "./pages/AuthPage";
-import { AdminPage } from "./pages/AdminPage";
-import { TrackingPage } from "./pages/TrackingPage";
-import { VerifyEmailPage } from "./pages/VerifyEmailPage";
-import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordRecoveryPage";
 import { BuilderPage } from "./pages/BuilderPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { StorefrontPage } from "./pages/StorefrontPage";
-import { OrdersPage } from "./pages/OrdersPage";
 import { BagIcon } from "./components/BagIcon";
 import { PageContainer } from "./components/PageContainer";
 import { getCartOrder, readCart, saveCart, updateCart } from "./storefront";
 import type { CartLine, PizzaSelection } from "./storefront";
 import "./styles/storefront.css";
 
+const AuthPage = lazy(() => import("./pages/AuthPage").then(({ AuthPage }) => ({ default: AuthPage })));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage").then(({ VerifyEmailPage }) => ({ default: VerifyEmailPage })));
+const ForgotPasswordPage = lazy(() => import("./pages/PasswordRecoveryPage").then(({ ForgotPasswordPage }) => ({ default: ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import("./pages/PasswordRecoveryPage").then(({ ResetPasswordPage }) => ({ default: ResetPasswordPage })));
+const OrdersPage = lazy(() => import("./pages/OrdersPage").then(({ OrdersPage }) => ({ default: OrdersPage })));
+const TrackingPage = lazy(() => import("./pages/TrackingPage").then(({ TrackingPage }) => ({ default: TrackingPage })));
+const AdminPage = lazy(() => import("./pages/AdminPage").then(({ AdminPage }) => ({ default: AdminPage })));
+
+function Wordmark() {
+  return (
+    <Link to="/" className="store-brand" aria-label="Slice Pizza home">
+      <span className="store-brand__mark" aria-hidden="true" />
+      <span>slice<span className="store-brand__dot">.</span></span>
+    </Link>
+  );
+}
+
 function Shell({ user, cartCount, onLogout, children }: { user: User | null; cartCount: number; onLogout: () => void; children: React.ReactNode }) {
+  const { pathname } = useLocation();
   return (
     <div className="store-shell">
+      <a className="store-skip-link" href="#main-content" onClick={(event) => {
+        const main = document.getElementById("main-content");
+        if (!main) return;
+        event.preventDefault();
+        main.focus();
+      }}>Skip to content</a>
       <header className="store-header">
         <PageContainer as="div" className="store-header__inner">
-          <Link to="/" className="store-brand" aria-label="Slice Pizza home">slice<span>.</span></Link>
+          <Wordmark />
           <nav className="store-nav" aria-label="Menu">
-            <Link to="/#menu">Menu</Link>
-            <Link to="/build">Build your own</Link>
+            <Link to="/#menu" aria-current={pathname === "/" ? "page" : undefined}>Menu</Link>
+            <NavLink to="/build">Build your own</NavLink>
           </nav>
           <nav className="store-account" aria-label="Account and cart">
-            {user && <Link to="/orders">My orders</Link>}
-            {user?.role === "admin" && <Link to="/admin">Admin</Link>}
             {user ? (
-              <button onClick={onLogout}>Sign out</button>
+              <AccountMenu isAdmin={user.role === "admin"} onLogout={onLogout} />
             ) : (
-              <Link to="/login">Sign in</Link>
+              <NavLink to="/login">Sign in</NavLink>
             )}
-            <Link to="/checkout" className="store-cart-link" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "pizza" : "pizzas"}`}>
-              <BagIcon /><span>Cart</span><strong>{cartCount}</strong>
-            </Link>
+            <NavLink to="/checkout" className="store-cart-link" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "pizza" : "pizzas"}`}>
+              <BagIcon /><span>Cart</span><strong key={cartCount}>{cartCount}</strong>
+            </NavLink>
             <span className="sr-only" role="status">{cartCount} {cartCount === 1 ? "pizza" : "pizzas"} in your cart</span>
           </nav>
         </PageContainer>
@@ -45,11 +61,34 @@ function Shell({ user, cartCount, onLogout, children }: { user: User | null; car
       {children}
       <footer className="store-footer">
         <PageContainer as="div" className="store-footer__inner">
-          <Link to="/" className="store-brand" aria-label="Slice Pizza home">slice<span>.</span></Link>
+          <Wordmark />
           <Link className="action-link" to="/#menu">Menu</Link>
         </PageContainer>
       </footer>
     </div>
+  );
+}
+
+function AccountMenu({ isAdmin, onLogout }: { isAdmin: boolean; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details className="store-account-menu" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          setOpen(false);
+          event.currentTarget.querySelector("summary")?.focus();
+        }
+      }}>
+      <summary>Account</summary>
+      <div className="store-account-menu__panel">
+        <NavLink to="/orders" onClick={() => setOpen(false)}>My orders</NavLink>
+        {isAdmin && <NavLink to="/admin" onClick={() => setOpen(false)}>Admin</NavLink>}
+        <button type="button" onClick={onLogout}>Sign out</button>
+      </div>
+    </details>
   );
 }
 
@@ -76,8 +115,12 @@ export function App() {
   }
 
   useEffect(() => {
-    if (location.hash === "#menu") document.getElementById("menu")?.scrollIntoView();
-    else window.scrollTo(0, 0);
+    if (location.hash === "#menu") {
+      document.getElementById("menu-title")?.focus({ preventScroll: true });
+      document.getElementById("menu")?.scrollIntoView();
+    } else {
+      window.scrollTo(0, 0);
+    }
   }, [location.pathname, location.hash, location.key]);
 
   useEffect(() => { saveCart(cart); }, [cart]);
@@ -123,19 +166,21 @@ export function App() {
 
   return (
     <Shell user={user} cartCount={cartCount} onLogout={logout}>
-      <Routes>
-        <Route path="/" element={<StorefrontPage catalog={catalog} catalogError={catalogError} onRetry={refreshCatalog} canAdd={canAdd} onAdd={(pizza) => changeCart(pizza, 1)} />} />
-        <Route path="/build" element={<BuilderPage catalog={catalog} catalogError={catalogError} onRetry={refreshCatalog} canAdd={canAdd} onAdd={(pizza) => changeCart(pizza, 1)} />} />
-        <Route path="/checkout" element={<CheckoutPage cart={cart} catalog={catalog} catalogError={catalogError} user={user} onChange={changeCart} onOrdered={onOrdered} onRetry={refreshCatalog} />} />
-        <Route path="/login" element={<AuthPage key="login" mode="login" onAuth={onAuth} />} />
-        <Route path="/register" element={<AuthPage key="register" mode="register" onAuth={onAuth} />} />
-        <Route path="/verify-email" element={<VerifyEmailPage signedIn={Boolean(user)} />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage key={location.hash} />} />
-        <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
-        <Route path="/orders/:id" element={user ? <TrackingPage /> : <Navigate to="/login" />} />
-        <Route path="/admin" element={user?.role === "admin" ? <AdminPage /> : <Navigate to={user ? "/" : "/login"} replace />} />
-      </Routes>
+      <Suspense fallback={<PageContainer className="py-8"><p role="status">Loading page…</p></PageContainer>}>
+        <Routes>
+          <Route path="/" element={<StorefrontPage cart={cart} catalog={catalog} catalogError={catalogError} onRetry={refreshCatalog} canAdd={canAdd} onAdd={(pizza) => changeCart(pizza, 1)} />} />
+          <Route path="/build" element={<BuilderPage catalog={catalog} catalogError={catalogError} onRetry={refreshCatalog} canAdd={canAdd} onAdd={(pizza) => changeCart(pizza, 1)} />} />
+          <Route path="/checkout" element={<CheckoutPage cart={cart} catalog={catalog} catalogError={catalogError} user={user} onChange={changeCart} onOrdered={onOrdered} onRetry={refreshCatalog} />} />
+          <Route path="/login" element={<AuthPage key="login" mode="login" onAuth={onAuth} />} />
+          <Route path="/register" element={<AuthPage key="register" mode="register" onAuth={onAuth} />} />
+          <Route path="/verify-email" element={<VerifyEmailPage signedIn={Boolean(user)} />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage key={location.hash} />} />
+          <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
+          <Route path="/orders/:id" element={user ? <TrackingPage /> : <Navigate to="/login" />} />
+          <Route path="/admin" element={user?.role === "admin" ? <AdminPage /> : <Navigate to={user ? "/" : "/login"} replace />} />
+        </Routes>
+      </Suspense>
     </Shell>
   );
 }

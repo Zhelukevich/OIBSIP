@@ -25,6 +25,7 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
   const heading = useRef<HTMLHeadingElement>(null);
   const [step, setStep] = useState(0);
   const [hasNavigated, setHasNavigated] = useState(false);
+  const [recipeOpen, setRecipeOpen] = useState(() => window.matchMedia("(min-width: 781px)").matches);
   const [selected, setSelected] = useState<Record<InventoryItem["type"], string[]>>({
     base: [],
     sauce: [],
@@ -44,6 +45,7 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
   const currentChoices = selected[active.type];
   const options = [...ingredients.values()].filter(({ type }) => type === active.type);
   const unavailable = ingredientIds.some((id) => (ingredients.get(id)?.quantity ?? 0) < 1);
+  const total = formatPrice(ingredientIds.length * ingredientPrice);
 
   useEffect(() => {
     if (hasNavigated) heading.current?.focus();
@@ -75,14 +77,27 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
     <PageContainer className="builder">
       <header className="builder-heading">
         <Link className="action-link" to="/#menu"><span aria-hidden="true">←</span> Back to menu</Link>
-        <h1>Build your own</h1>
+        <h1 className="counter-title">Build your own</h1>
         <p>Choose your crust, sauce, cheese, and toppings.</p>
       </header>
       {catalogError && <p className="store-notice" role="alert">We couldn’t load the ingredients. <button className="action-link" onClick={onRetry}>Try again</button></p>}
       {!catalog && !catalogError && <p role="status">Loading ingredients…</p>}
       {catalog && (
         <div className="builder-layout">
-          <section className="builder-panel" aria-labelledby="builder-step">
+          <aside className="builder-summary counter-panel" aria-label="Your recipe">
+            <details open={recipeOpen} onToggle={(event) => setRecipeOpen(event.currentTarget.open)}>
+              <summary>Your recipe <strong>{total}</strong></summary>
+              <dl>
+                {steps.map(({ type, label }) => (
+                  <div key={type}>
+                    <dt>{label}</dt>
+                    <dd>{selected[type].map((id) => ingredients.get(id)?.name ?? "Unavailable").join(", ") || "—"}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          </aside>
+          <section className="builder-panel counter-panel" aria-labelledby="builder-step">
             <ol className="builder-steps" aria-label="Pizza builder steps">
               {steps.map(({ type, label }, index) => (
                 <li key={type}>
@@ -137,7 +152,7 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
               <p className="store-notice" role="alert">There isn’t enough stock for this pizza and the items in your cart. Adjust your recipe or cart.</p>
             )}
             <div className="builder-actions">
-              <p className="builder-total"><span>Pizza total</span><strong>{formatPrice(ingredientIds.length * ingredientPrice)}</strong></p>
+              <p className="builder-total"><span>Pizza total</span><strong>{total}</strong></p>
               <div className="builder-buttons">
                 {step > 0 && <Button variant="outline" onClick={() => goToStep(step - 1)}>Back</Button>}
                 {finalStep ? (
@@ -148,20 +163,6 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
               </div>
             </div>
           </section>
-          <aside className="builder-summary" aria-labelledby="builder-summary-title">
-            <img src="/pizza/garden.jpg" alt="" width="720" height="480" />
-            <div className="builder-summary__body">
-              <h2 id="builder-summary-title">Your recipe</h2>
-              <dl>
-                {steps.map(({ type, label }) => (
-                  <div key={type}>
-                    <dt>{label}</dt>
-                    <dd>{selected[type].map((id) => ingredients.get(id)?.name ?? "Unavailable").join(", ") || "—"}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          </aside>
         </div>
       )}
     </PageContainer>

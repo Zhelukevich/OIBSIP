@@ -22,12 +22,12 @@
   min-height: 545px;
   overflow: hidden;
   border: 1px solid var(--color-line);
-  border-radius: 26px;
+  border-radius: var(--radius-cards);
   background: var(--color-surface);
 }
 
 .auth-photo {
-  background: #3b2318 url("/pizza/auth.jpg") 50% 54% / cover no-repeat;
+  background: var(--color-paper) url("/pizza/auth.webp") 50% 54% / cover no-repeat;
 }
 
 .auth-card__body {
@@ -37,7 +37,7 @@
 }
 
 .auth-card h1 {
-  font: 700 clamp(2.55rem, 4.5vw, 4rem)/1.01 Georgia, "Times New Roman", serif;
+  font: 800 clamp(2.25rem, 4.5vw, 4rem)/1.01 var(--font-display);
   letter-spacing: -.058em;
   text-wrap: balance;
 }
@@ -74,10 +74,10 @@
 
 .auth-request-error {
   color: var(--color-danger);
-  border: 1px solid #eed5c9;
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-inputs);
   padding: 9px 12px;
-  background: #fdf0e9;
+  background: var(--color-action-soft);
 }
 
 .auth-switch {

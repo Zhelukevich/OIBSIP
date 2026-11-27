@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import { Button } from "../components/Button";
 import { PageContainer } from "../components/PageContainer";
@@ -8,7 +8,12 @@ import { openPayment, verifyPayment, type PaymentResponse } from "../services/pa
 import { formatPrice } from "../storefront";
 import type { Order } from "../types";
 
-const statusSteps = ["RECEIVED", "IN_KITCHEN", "SENT_TO_DELIVERY", "DELIVERED"];
+const statusSteps = [
+  { id: "RECEIVED", label: "Order received" },
+  { id: "IN_KITCHEN", label: "In the kitchen" },
+  { id: "SENT_TO_DELIVERY", label: "Out for delivery" },
+  { id: "DELIVERED", label: "Delivered" },
+];
 
 export function TrackingPage() {
   const { id } = useParams();
@@ -116,45 +121,52 @@ function TrackingOrder({ id }: { id: string }) {
 
   if (!order) {
     return (
-      <PageContainer width="reading" className="py-10">
+      <PageContainer width="reading" className="py-8">
+        <Link className="action-link" to="/orders">← My orders</Link>
+        <h1 className="counter-title">Track your order</h1>
         {loadError ? (
-          <>
+          <div className="counter-panel p-5">
             <p className="mb-4 text-danger" role="alert">{loadError}</p>
             <Button variant="outline" onClick={() => { setLoadError(""); void loadOrder(); }}>Try again</Button>
-          </>
+          </div>
         ) : <p role="status">Loading order…</p>}
       </PageContainer>
     );
   }
 
-  const currentIndex = statusSteps.indexOf(order.status);
+  const currentIndex = statusSteps.findIndex(({ id }) => id === order.status);
 
   return (
-    <PageContainer width="reading" className="py-10">
-      <h1 className="mb-2 text-heading font-bold">Order #{order._id.slice(-6)}</h1>
-      <p className="mb-8 text-muted">{formatPrice(order.total, order.currency ?? "INR")}</p>
+    <PageContainer width="reading" className="py-8">
+      <Link className="action-link" to="/orders">← My orders</Link>
+      <h1 className="counter-title">Order #{order._id.slice(-6)}</h1>
+      <p className="mb-4 text-muted">Total <strong className="text-ink">{formatPrice(order.total, order.currency ?? "INR")}</strong></p>
       {order.status === "AWAITING_PAYMENT" && (
-        <Button className="mb-8" onClick={() => void pay()} disabled={paymentPhase !== null}>
-          {paymentPhase === "checkout" ? "Checkout in progress…"
-            : paymentPhase === "verification" ? "Confirming payment…"
-            : pendingPayment ? "Retry payment confirmation" : "Pay with Razorpay"}
-        </Button>
+        <section className="counter-panel mb-5 grid justify-items-start gap-3 p-5" aria-labelledby="payment-status">
+          <h2 id="payment-status" className="font-bold">Awaiting payment</h2>
+          {paymentError && <p className="text-danger" role="alert">{paymentError}</p>}
+          <Button onClick={() => void pay()} disabled={paymentPhase !== null}>
+            {paymentPhase === "checkout" ? "Checkout in progress…"
+              : paymentPhase === "verification" ? "Confirming payment…"
+              : pendingPayment ? "Retry payment confirmation" : "Pay with Razorpay"}
+          </Button>
+        </section>
       )}
-      {paymentError && order.status === "AWAITING_PAYMENT" && <p className="mb-4 text-danger" role="alert">{paymentError}</p>}
       {loadError && <p className="mb-4 text-danger" role="alert">{loadError}</p>}
-      <div className="rounded-cards border border-line bg-surface p-6">
-        {statusSteps.map((status, index) => (
-          <div className="relative flex items-center gap-4 pb-6 last:pb-0" key={status}>
+      {order.status === "CANCELLED" && <p className="mb-4 font-bold text-danger">Order cancelled</p>}
+      <ol className="counter-panel p-5" aria-label="Order progress">
+        {statusSteps.map(({ id, label }, index) => (
+          <li className="relative flex items-center gap-4 pb-6 last:pb-0" key={id} aria-current={index === currentIndex ? "step" : undefined}>
             {index < statusSteps.length - 1 && <span className={`absolute left-[11px] top-6 bottom-0 w-0.5 ${index < currentIndex ? "bg-action" : "bg-line"}`} />}
             <span className={`relative z-10 h-6 w-6 rounded-full border-4 ${index <= currentIndex ? "border-action bg-surface" : "border-line bg-surface"}`} />
             <div>
-              <strong>{status.replaceAll("_", " ")}</strong>
+              <strong>{label}</strong>
               {index === currentIndex && <span className="ml-3 text-sm text-action">Current</span>}
             </div>
-          </div>
+          </li>
         ))}
-      </div>
-      <section className="mt-6 rounded-cards border border-line bg-surface p-6">
+      </ol>
+      <section className="counter-panel mt-5 p-5">
         <h2 className="mb-3 font-bold">Ingredients</h2>
         {order.ingredients.map((ingredient, index) => (
           <p key={`${ingredient.inventoryItem}-${index}`} className="flex justify-between gap-4 text-sm text-muted">

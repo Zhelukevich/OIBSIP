@@ -23,16 +23,16 @@ export function OrderHistory({ state, onRetry }: { state: OrdersState; onRetry: 
       </div>
     );
   }
-  if (!state.orders.length) return <p className="text-muted">No orders yet.</p>;
+  if (!state.orders.length) return <p className="counter-panel p-5 text-muted">No orders yet.</p>;
 
   return (
     <ul className="grid gap-4" aria-label="Your orders">
       {state.orders.map((order) => (
         <li key={order._id}>
-          <Link to={`/orders/${order._id}`} className="block rounded-cards border border-line bg-surface p-5 hover:border-action">
+          <Link to={`/orders/${order._id}`} className="counter-panel block p-5 hover:border-action">
             <div className="flex flex-wrap justify-between gap-2">
               <strong>Order #{order._id.slice(-6)}</strong>
-              <span>{order.status.replaceAll("_", " ")}</span>
+              <span className="rounded-inputs bg-olive-soft px-2 py-1 text-sm font-bold text-olive">{order.status.replaceAll("_", " ")}</span>
             </div>
             <div className="mt-2 text-sm text-muted">{formatPrice(order.total, order.currency ?? "INR")}</div>
           </Link>
@@ -77,8 +77,8 @@ export function OrdersPage() {
   }
 
   return (
-    <PageContainer className="py-10">
-      <h1 className="mb-6 text-heading font-bold">My orders</h1>
+    <PageContainer width="reading" className="py-8">
+      <h1 className="counter-title">My orders</h1>
       <OrderHistory state={state} onRetry={retry} />
     </PageContainer>
   );

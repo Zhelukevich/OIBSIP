@@ -59,6 +59,7 @@ export function AdminPage() {
   const [tab, setTab] = useState<"inventory" | "orders">("inventory");
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   async function load() {
@@ -71,6 +72,8 @@ export function AdminPage() {
       setOrders(orderData.data.orders);
     } catch {
       setError("Could not load admin data");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -96,17 +99,18 @@ export function AdminPage() {
   }
 
   return (
-    <PageContainer className="py-10">
-      <h1 className="mb-6 text-heading font-bold">Admin dashboard</h1>
+    <PageContainer className="py-8">
+      <h1 className="counter-title">Admin dashboard</h1>
       <div className="mb-6 flex gap-2">
         <Button variant={tab === "inventory" ? "primary" : "outline"} aria-pressed={tab === "inventory"} onClick={() => setTab("inventory")}>Inventory</Button>
         <Button variant={tab === "orders" ? "primary" : "outline"} aria-pressed={tab === "orders"} onClick={() => setTab("orders")}>Orders</Button>
       </div>
       {error && <p className="mb-4 text-danger" role="alert">{error}</p>}
+      {loading && <p className="text-muted" role="status">Loading admin data…</p>}
       {tab === "inventory" ? (
         <div className="grid gap-3">
           {items.map((item) => (
-            <div className="flex flex-wrap items-start justify-between gap-3 rounded-cards border border-line bg-surface p-4" key={item._id}>
+            <div className="counter-panel flex flex-wrap items-start justify-between gap-3 p-4" key={item._id}>
               <div><strong>{item.name}</strong><span className="ml-2 text-sm text-muted">{item.type}</span></div>
               <div className="flex flex-wrap items-start gap-2">
                 <StockField label="Stock" savedValue={item.quantity} onSave={(value) => updateItem(item._id, "quantity", value)} />
@@ -117,8 +121,9 @@ export function AdminPage() {
         </div>
       ) : (
         <div className="grid gap-3">
+          {!loading && !error && !orders.length && <p className="counter-panel p-5 text-muted">No orders yet.</p>}
           {orders.map((order) => (
-            <div className="rounded-cards border border-line bg-surface p-4" key={order._id}>
+            <div className="counter-panel p-4" key={order._id}>
               <div className="flex flex-wrap justify-between gap-3">
                 <div><strong>#{order._id.slice(-6)}</strong><span className="ml-3 text-sm text-muted">{typeof order.user === "object" ? order.user.name : ""}</span></div>
                 <div className="w-48">

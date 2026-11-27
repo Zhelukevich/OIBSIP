@@ -1,29 +1,37 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("../assets/fonts/bricolage-grotesque-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600 800;
+  font-display: swap;
+}
+
 @theme static {
-  --color-canvas: #faf7f0;
-  --color-surface: #fffdfa;
-  --color-ink: #252019;
-  --color-muted: #675e52;
-  --color-line: #e9ded0;
-  --color-control: #dcd0c1;
-  --color-action: #b5381c;
-  --color-action-hover: #8d2c17;
-  --color-action-soft: #fbede4;
-  --color-hero-action: #f9bc83;
-  --color-hero-action-hover: #ffd3a7;
-  --color-hero-ink: #2d1b10;
-  --color-danger: #943018;
+  --color-canvas: #f8f0e3;
+  --color-surface: #fffbf3;
+  --color-paper: #f2e3cb;
+  --color-ink: #272118;
+  --color-muted: #625748;
+  --color-line: #d7c7af;
+  --color-control: #8c7661;
+  --color-action: #a92d20;
+  --color-action-hover: #7e231a;
+  --color-action-soft: #f8e2d8;
+  --color-olive: #3e5737;
+  --color-olive-soft: #e5ead8;
+  --color-danger: #912a20;
 
   --font-sans: "Inter Variable", Inter, Manrope, "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-script: "Nanum Pen Script", Caveat, Kalam, cursive;
+  --font-display: "Bricolage Grotesque", "Inter Variable", Inter, system-ui, sans-serif;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
 
   --text-caption: 11px;
   --text-caption--line-height: 1.4;
-  --text-body: 14px;
+  --text-body: 15px;
   --text-body--line-height: 1.5;
   --text-body-lg: 16px;
   --text-body-lg--line-height: 1.5;
@@ -68,12 +76,12 @@
   --radius-nav: 16px;
   --radius-hero: 40px;
   --radius-tags: 9999px;
-  --radius-cards: 20px;
+  --radius-cards: 16px;
   --radius-icons: 8px;
   --radius-inputs: 12px;
-  --radius-buttons: 9999px;
+  --radius-buttons: 12px;
 
-  --container-page: 1180px;
+  --container-page: 1200px;
   --container-reading: 800px;
 }
 
@@ -103,7 +111,7 @@
     opacity: 0.65;
   }
 
-  :where(a, button, input, select, [tabindex]):focus-visible {
+  :where(a, button, input, select, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-action);
     outline-offset: 4px;
   }
