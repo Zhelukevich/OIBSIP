@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api } from "./services/api";
-import type { InventoryItem, Order, User } from "./types";
+import type { InventoryItem, User } from "./types";
 import { AuthPage } from "./pages/AuthPage";
 import { AdminPage } from "./pages/AdminPage";
 import { TrackingPage } from "./pages/TrackingPage";
@@ -9,8 +9,11 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordRecoveryPage";
 import { BuilderPage } from "./pages/BuilderPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
-import { BagIcon, StorefrontPage } from "./pages/StorefrontPage";
-import { formatPrice, getCartOrder, readCart, saveCart, updateCart } from "./storefront";
+import { StorefrontPage } from "./pages/StorefrontPage";
+import { OrdersPage } from "./pages/OrdersPage";
+import { BagIcon } from "./components/BagIcon";
+import { PageContainer } from "./components/PageContainer";
+import { getCartOrder, readCart, saveCart, updateCart } from "./storefront";
 import type { CartLine, PizzaSelection } from "./storefront";
 import "./styles/storefront.css";
 
@@ -18,7 +21,7 @@ function Shell({ user, cartCount, onLogout, children }: { user: User | null; car
   return (
     <div className="store-shell">
       <header className="store-header">
-        <div className="store-container store-header__inner">
+        <PageContainer as="div" className="store-header__inner">
           <Link to="/" className="store-brand" aria-label="Slice Pizza home">slice<span>.</span></Link>
           <nav className="store-nav" aria-label="Menu">
             <Link to="/#menu">Menu</Link>
@@ -37,37 +40,16 @@ function Shell({ user, cartCount, onLogout, children }: { user: User | null; car
             </Link>
             <span className="sr-only" role="status">{cartCount} {cartCount === 1 ? "pizza" : "pizzas"} in your cart</span>
           </nav>
-        </div>
+        </PageContainer>
       </header>
       {children}
       <footer className="store-footer">
-        <div className="store-container">
+        <PageContainer as="div" className="store-footer__inner">
           <Link to="/" className="store-brand" aria-label="Slice Pizza home">slice<span>.</span></Link>
-          <Link className="store-text-link" to="/#menu">Menu</Link>
-        </div>
+          <Link className="action-link" to="/#menu">Menu</Link>
+        </PageContainer>
       </footer>
     </div>
-  );
-}
-
-function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  useEffect(() => {
-    api.get("/orders/mine").then(({ data }) => setOrders(data.orders));
-  }, []);
-  return (
-    <main className="mx-auto max-w-[1200px] px-5 py-10">
-      <h1 className="mb-6 text-heading font-bold">My orders</h1>
-      <div className="grid gap-4">
-        {orders.map((order) => (
-          <Link key={order._id} to={`/orders/${order._id}`} className="rounded-cards border border-hairline bg-paper-white p-5">
-            <div className="flex justify-between"><strong>Order #{order._id.slice(-6)}</strong><span>{order.status.replaceAll("_", " ")}</span></div>
-            <div className="mt-2 text-sm text-smoke">{formatPrice(order.total, order.currency ?? "INR")}</div>
-          </Link>
-        ))}
-        {!orders.length && <p className="text-smoke">No orders yet.</p>}
-      </div>
-    </main>
   );
 }
 

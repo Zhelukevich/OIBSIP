@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { api } from "../services/api";
+import { Button, ButtonLink } from "../components/Button";
+import { AuthLayout } from "../features/auth/AuthLayout";
+import { api, apiErrorMessage } from "../services/api";
 
 type RegistrationNotice = {
   registered?: boolean;
@@ -13,6 +15,7 @@ export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   const registration = location.state as RegistrationNotice | null;
+  const returnTo = registration?.returnTo === "/checkout" ? "/checkout" : "/";
   const token = new URLSearchParams(location.hash.slice(1)).get("token");
   const [verificationUrl, setVerificationUrl] = useState(registration?.verificationUrl);
   const [verified, setVerified] = useState(false);
@@ -29,24 +32,27 @@ export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
         setVerified(true);
         navigate("/verify-email", { replace: true, state: { returnTo: registration?.returnTo } });
       } else {
-        const { data } = await api.post("/auth/resend-verification");
+        const { data } = await api.post<{ verificationUrl?: string }>("/auth/resend-verification");
         setVerificationUrl(data.verificationUrl);
         setSent(true);
       }
     } catch (caught) {
-      setError((caught as { response?: { data?: { message?: string } } }).response?.data?.message || "Request failed");
+      setError(apiErrorMessage(caught, "Request failed"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-16">
-      <section className="rounded-cards bg-paper-white p-8 shadow-sm">
-        <h1 className="mb-4 text-heading-sm font-bold">Confirm your email</h1>
-        {verified && <p role="status">Email confirmed. Sign in to continue.</p>}
+    <AuthLayout
+      title="Confirm your email"
+      backTo={returnTo}
+      backLabel={returnTo === "/checkout" ? "Back to your cart" : "Back to menu"}
+    >
+      <div className="auth-form">
+        {verified && <p className="text-muted" role="status">Email confirmed. Sign in to continue.</p>}
         {!verified && !token && (
-          <p role="status">
+          <p className="text-muted" role="status">
             {registration?.deliveryFailed && !sent
               ? "Your account was created. Sign in to request another verification email."
               : verificationUrl
@@ -57,19 +63,19 @@ export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
           </p>
         )}
         {!verified && !token && verificationUrl && (
-          <Link className="mt-4 block text-indigo-bolt" to={verificationUrl} state={{ returnTo: registration?.returnTo }}>Open local verification link</Link>
+          <Link className="action-link justify-self-start" to={verificationUrl} state={{ returnTo }}>Open local verification link</Link>
         )}
-        {error && <p className="form-error mt-4" role="alert">{error}</p>}
+        {error && <p className="auth-request-error" role="alert">{error}</p>}
         {!verified && (token || signedIn) && (
-          <button className="mt-5 w-full rounded-buttons bg-indigo-bolt px-5 py-3 font-bold text-white" onClick={submit} disabled={busy}>
+          <Button onClick={submit} disabled={busy}>
             {token ? "Confirm email" : "Send another verification email"}
-          </button>
+          </Button>
         )}
         {token && error && signedIn && (
-          <Link className="mt-4 block text-indigo-bolt" to="/verify-email" onClick={() => setError("")}>Request a new link</Link>
+          <Link className="action-link justify-self-start" to="/verify-email" state={{ returnTo }} onClick={() => setError("")}>Request a new link</Link>
         )}
-        <Link className="mt-5 block text-center text-sm text-indigo-bolt" to="/login" state={{ returnTo: registration?.returnTo }}>Sign in</Link>
-      </section>
-    </main>
+        <ButtonLink variant={verified ? "primary" : "outline"} to="/login" state={{ returnTo }}>Sign in</ButtonLink>
+      </div>
+    </AuthLayout>
   );
 }

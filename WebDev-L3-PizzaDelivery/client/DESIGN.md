@@ -3,6 +3,8 @@
 
 **Theme:** light
 
+The Slice Pizza implementation uses the Tailwind theme in `src/styles/index.css`. Use its semantic tokens (for example, `bg-action`, `bg-surface`, and `text-muted`) and the shared buttons, fields, and container in `src/components/`. The spacing utility scale uses 4px per step. The visual reference below documents the source palette and typography.
+
 Source measurements are normalized; roles and recommendations are interpreted. Font summary lists are independent, not paired by position. HTML examples are reconstructions, not source components.
 
 7shifts is a light, air-kissed SaaS canvas with a single punchy indigo as the call-to-action and a small cast of warm accents doing the personality work. The page reads like a clean restaurant counter: white surface, warm bone secondary panels, soft pastel card variants, and the occasional full-bleed black band that makes everything around it feel brighter. Orange is the signature flourish — it underlines hero words in a hand-drawn stroke, floods feature backgrounds, and marks tabbed content — while a lime-green acts as highlighter text inside dark sections. Components are generous and rounded (pill buttons, 20px cards, 40px hero plates) with a compact vertical rhythm. The lone script typeface, Nanum Pen Script, shows up only as a personality accent under hero copy and never on body or UI controls.
@@ -434,22 +436,7 @@ Example Component Prompts:
   --tracking-display: -1.92px;
 
   /* Spacing */
-  --spacing-4: 4px;
-  --spacing-8: 8px;
-  --spacing-12: 12px;
-  --spacing-16: 16px;
-  --spacing-20: 20px;
-  --spacing-24: 24px;
-  --spacing-28: 28px;
-  --spacing-40: 40px;
-  --spacing-48: 48px;
-  --spacing-56: 56px;
-  --spacing-60: 60px;
-  --spacing-80: 80px;
-  --spacing-92: 92px;
-  --spacing-100: 100px;
-  --spacing-120: 120px;
-  --spacing-160: 160px;
+  --spacing: 4px;
 
   /* Border Radius */
   --radius-lg: 8px;

@@ -1,11 +1,13 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
 import { useForm } from "react-hook-form";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { Button, ButtonLink } from "../components/Button";
+import { FormField } from "../components/FormField";
+import { AuthLayout } from "../features/auth/AuthLayout";
 import { api } from "../services/api";
-import "../styles/auth.css";
 
 const recoverySchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -19,23 +21,8 @@ const resetSchema = z.object({
   message: "Passwords do not match.",
 });
 
-function RecoveryCard({ title, children }: { title: string; children: ReactNode }) {
-  const { state } = useLocation();
-  return (
-    <main className="store-container auth-page">
-      <Link className="store-text-link auth-back" to="/login" state={state}>Back to sign in</Link>
-      <section className="auth-card" aria-labelledby="recovery-title">
-        <div className="auth-photo" aria-hidden="true" />
-        <div className="auth-card__body">
-          <h1 id="recovery-title">{title}</h1>
-          {children}
-        </div>
-      </section>
-    </main>
-  );
-}
-
 export function ForgotPasswordPage() {
+  const { state } = useLocation();
   const [sent, setSent] = useState(false);
   const [requestError, setRequestError] = useState("");
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.infer<typeof recoverySchema>>({
@@ -55,28 +42,30 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <RecoveryCard title={sent ? "Check your inbox" : "Forgot your password?"}>
+    <AuthLayout title={sent ? "Check your inbox" : "Forgot your password?"} backTo="/login" backLabel="Back to sign in" backState={state}>
       {sent ? (
         <p className="auth-intro" role="status">If an account matches that email address, you'll receive a password reset link.</p>
       ) : (
         <>
           <p className="auth-intro">Enter your account email to request a password reset link.</p>
           <form className="auth-form" noValidate onSubmit={handleSubmit(submit)}>
-            <div className="auth-field">
-              <label htmlFor="recovery-email">Email address</label>
-              <input id="recovery-email" type="email" autoComplete="email" autoCapitalize="none" required
-                aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "recovery-email-error" : undefined}
-                {...register("email")} />
-              {errors.email && <p id="recovery-email-error" className="auth-field-error" role="alert">{errors.email.message}</p>}
-            </div>
+            <FormField
+              label="Email address"
+              type="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              required
+              error={errors.email?.message}
+              {...register("email")}
+            />
             {requestError && <p className="auth-request-error" role="alert">{requestError}</p>}
-            <button className="store-button auth-submit" type="submit" disabled={isSubmitting}>
+            <Button className="mt-1" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Sending…" : "Send reset link"}
-            </button>
+            </Button>
           </form>
         </>
       )}
-    </RecoveryCard>
+    </AuthLayout>
   );
 }
 
@@ -105,34 +94,37 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <RecoveryCard title="Choose a new password">
+    <AuthLayout title="Choose a new password" backTo="/login" backLabel="Back to sign in" backState={state}>
       {invalidLink || !/^[a-f0-9]{64}$/.test(token) ? (
         <div className="auth-form">
           <p className="auth-request-error" role="alert">This password reset link is invalid or has expired.</p>
-          <Link className="store-button auth-submit" to="/forgot-password" state={state}>Request a new link</Link>
+          <ButtonLink className="mt-1" to="/forgot-password" state={state}>Request a new link</ButtonLink>
         </div>
       ) : (
         <form className="auth-form" noValidate onSubmit={handleSubmit(submit)}>
-          <div className="auth-field">
-            <label htmlFor="reset-password">New password</label>
-            <input id="reset-password" type="password" autoComplete="new-password" required
-              aria-invalid={Boolean(errors.password)} aria-describedby="reset-password-help" {...register("password")} />
-            <p id="reset-password-help" className={errors.password ? "auth-field-error" : "auth-field-hint"}
-              role={errors.password ? "alert" : undefined}>{errors.password?.message ?? "Use at least 8 characters."}</p>
-          </div>
-          <div className="auth-field">
-            <label htmlFor="reset-confirmation">Confirm new password</label>
-            <input id="reset-confirmation" type="password" autoComplete="new-password" required
-              aria-invalid={Boolean(errors.confirmation)} aria-describedby={errors.confirmation ? "reset-confirmation-error" : undefined}
-              {...register("confirmation")} />
-            {errors.confirmation && <p id="reset-confirmation-error" className="auth-field-error" role="alert">{errors.confirmation.message}</p>}
-          </div>
+          <FormField
+            label="New password"
+            type="password"
+            autoComplete="new-password"
+            required
+            error={errors.password?.message}
+            hint="Use at least 8 characters."
+            {...register("password")}
+          />
+          <FormField
+            label="Confirm new password"
+            type="password"
+            autoComplete="new-password"
+            required
+            error={errors.confirmation?.message}
+            {...register("confirmation")}
+          />
           {requestError && <p className="auth-request-error" role="alert">{requestError}</p>}
-          <button className="store-button auth-submit" type="submit" disabled={isSubmitting}>
+          <Button className="mt-1" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Updating…" : "Update password"}
-          </button>
+          </Button>
         </form>
       )}
-    </RecoveryCard>
+    </AuthLayout>
   );
 }

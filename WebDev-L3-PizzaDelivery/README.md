@@ -43,6 +43,8 @@
 - Database: MongoDB Atlas Free Tier
 - Email: Gmail SMTP
 
+Route `/api` to Express. For live order updates, route `/socket.io` to Express with WebSocket upgrades enabled, or set `VITE_SOCKET_ORIGIN` to the public Express origin when building the client. Vite proxies both paths during local development.
+
 ## Start
 
 ```bash

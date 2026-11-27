@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../services/api";
+import { api, apiErrorMessage } from "../services/api";
 import { describePizza, formatPrice, getCartOrder, pizzaKey, updateCart } from "../storefront";
 import type { CartLine, PizzaSelection } from "../storefront";
 import type { InventoryItem, Order, User } from "../types";
-import { BagIcon } from "./StorefrontPage";
+import { BagIcon } from "../components/BagIcon";
+import { Button, ButtonLink } from "../components/Button";
+import { PageContainer } from "../components/PageContainer";
 
 export function CheckoutPage({ cart, catalog, catalogError, user, onChange, onOrdered, onRetry }: {
   cart: CartLine[];
@@ -34,7 +36,7 @@ export function CheckoutPage({ cart, catalog, catalogError, user, onChange, onOr
       onOrdered(cart);
       navigate(`/orders/${data.order._id}`);
     } catch (caught) {
-      setError((caught as { response?: { data?: { message?: string } } }).response?.data?.message || "Could not create your order. Please try again.");
+      setError(apiErrorMessage(caught, "Could not create your order. Please try again."));
       onRetry();
     } finally {
       inFlight.current = false;
@@ -43,14 +45,14 @@ export function CheckoutPage({ cart, catalog, catalogError, user, onChange, onOr
   }
 
   return (
-    <main className="store-container checkout">
-      <Link className="store-text-link" to="/">← Back to menu</Link>
+    <PageContainer className="checkout">
+      <Link className="action-link" to="/">← Back to menu</Link>
       <h1>Your cart</h1>
       {!lines.length ? (
         <section className="checkout-empty">
           <BagIcon />
           <h2>Your cart is empty</h2>
-          <Link className="store-button" to="/">Browse pizzas <span aria-hidden="true">→</span></Link>
+          <ButtonLink to="/">Browse pizzas <span aria-hidden="true">→</span></ButtonLink>
         </section>
       ) : (
         <div className="checkout-grid">
@@ -78,21 +80,21 @@ export function CheckoutPage({ cart, catalog, catalogError, user, onChange, onOr
             <p className="checkout-total"><span>Total</span><strong>{formatPrice(total)}</strong></p>
             {catalog && !ingredients && <p className="store-notice" role="alert">Some ingredients are out of stock. Adjust your cart to continue.</p>}
             {!catalog && (catalogError ? (
-              <p className="store-notice" role="alert">We couldn’t check availability. <button className="store-text-link" onClick={onRetry}>Try again</button></p>
+              <p className="store-notice" role="alert">We couldn’t check availability. <button className="action-link" onClick={onRetry}>Try again</button></p>
             ) : <p role="status">Checking availability…</p>)}
             {error && <p className="store-notice" role="alert">{error}</p>}
             {!user ? (
-              <Link className="store-button" to="/login" state={{ returnTo: "/checkout" }}>Sign in to continue <span aria-hidden="true">→</span></Link>
+              <ButtonLink className="w-full" to="/login" state={{ returnTo: "/checkout" }}>Sign in to continue <span aria-hidden="true">→</span></ButtonLink>
             ) : !user.emailVerified ? (
-              <Link className="store-button" to="/verify-email" state={{ returnTo: "/checkout" }}>Confirm your email <span aria-hidden="true">→</span></Link>
+              <ButtonLink className="w-full" to="/verify-email" state={{ returnTo: "/checkout" }}>Confirm your email <span aria-hidden="true">→</span></ButtonLink>
             ) : (
-              <button className="store-button" disabled={busy || !ingredients} onClick={placeOrder}>
+              <Button className="w-full" disabled={busy || !ingredients} onClick={placeOrder}>
                 {busy ? "Creating your order…" : "Continue to payment"} <span aria-hidden="true">→</span>
-              </button>
+              </Button>
             )}
           </section>
         </div>
       )}
-    </main>
+    </PageContainer>
   );
 }

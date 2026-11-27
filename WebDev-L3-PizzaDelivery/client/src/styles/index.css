@@ -1,21 +1,19 @@
 @import "tailwindcss";
 
-@theme {
-  --color-indigo-bolt: #4570ff;
-  --color-ember-orange: #ff6808;
-  --color-lime-highlighter: #c6ff94;
-  --color-lavender-mist: #ebdcff;
-  --color-ice-blue: #d6e0ff;
-  --color-lilac-bloom: #c293f1;
-  --color-deep-navy: #193f78;
-  --color-forest-sage: #244f47;
-  --color-warm-bone: #f1f0ec;
-  --color-paper-white: #ffffff;
-  --color-ink-black: #000000;
-  --color-hairline: #e5e7eb;
-  --color-stone: #d1d5db;
-  --color-smoke: #6e6d6c;
-  --color-graphite: #555555;
+@theme static {
+  --color-canvas: #faf7f0;
+  --color-surface: #fffdfa;
+  --color-ink: #252019;
+  --color-muted: #675e52;
+  --color-line: #e9ded0;
+  --color-control: #dcd0c1;
+  --color-action: #b5381c;
+  --color-action-hover: #8d2c17;
+  --color-action-soft: #fbede4;
+  --color-hero-action: #f9bc83;
+  --color-hero-action-hover: #ffd3a7;
+  --color-hero-ink: #2d1b10;
+  --color-danger: #943018;
 
   --font-sans: "Inter Variable", Inter, Manrope, "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-script: "Nanum Pen Script", Caveat, Kalam, cursive;
@@ -58,23 +56,7 @@
   --tracking-heading-lg: -1.2px;
   --tracking-display: -1.92px;
 
-  --spacing-4: 4px;
-  --spacing-8: 8px;
-  --spacing-12: 12px;
-  --spacing-16: 16px;
-  --spacing-20: 20px;
-  --spacing-24: 24px;
-  --spacing-28: 28px;
-  --spacing-40: 40px;
-  --spacing-48: 48px;
-  --spacing-56: 56px;
-  --spacing-60: 60px;
-  --spacing-64: 64px;
-  --spacing-80: 80px;
-  --spacing-92: 92px;
-  --spacing-100: 100px;
-  --spacing-120: 120px;
-  --spacing-160: 160px;
+  --spacing: 4px;
 
   --radius-lg: 8px;
   --radius-xl: 12px;
@@ -91,78 +73,48 @@
   --radius-inputs: 12px;
   --radius-buttons: 9999px;
 
-  --container-page: 1200px;
+  --container-page: 1180px;
+  --container-reading: 800px;
 }
 
-:root {
-  font-family: var(--font-sans);
-  color: var(--color-ink-black);
-  background: var(--color-paper-white);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-  letter-spacing: var(--tracking-body);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+@layer base {
+  :root {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: var(--color-canvas);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
 
-  --page-max-width: 1200px;
-  --section-gap: 72px;
-  --card-padding: 24px;
-  --element-gap: 12px;
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+  }
+
+  :where(button, a, select) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  :where(a, button, input, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 4px;
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer components {
+  .action-link {
+    @apply font-bold text-action underline-offset-3 hover:underline;
+  }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-button, input, select {
-  font: inherit;
-}
-
-button, a, select {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-.form-label {
-  display: block;
-  margin-top: 12px;
-  font-weight: 700;
-}
-
-.form-input, .admin-input {
-  display: block;
-  width: 100%;
-  margin-top: 6px;
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-inputs);
-  background: var(--color-paper-white);
-  padding: 11px 12px;
-  outline: none;
-}
-
-.form-input:focus, .admin-input:focus {
-  border-color: var(--color-indigo-bolt);
-  box-shadow: 0 0 0 3px rgb(69 112 255 / 12%);
-}
-
-.admin-input {
-  width: 100px;
-  margin-top: 4px;
-  padding: 8px;
-}
-
-.form-error {
-  margin-top: 8px;
-  color: #b42318;
-  font-size: var(--text-body);
+  .action-link span {
+    margin-inline-start: 4px;
+  }
 }

@@ -14,7 +14,7 @@
 
 .builder-heading p,
 .builder-step-heading p {
-  color: var(--store-muted);
+  color: var(--color-muted);
 }
 
 .builder-layout {
@@ -26,9 +26,9 @@
 
 .builder-panel,
 .builder-summary {
-  border: 1px solid var(--store-line);
+  border: 1px solid var(--color-line);
   border-radius: 24px;
-  background: var(--store-white);
+  background: var(--color-surface);
 }
 
 .builder-panel {
@@ -54,7 +54,7 @@
   gap: 6px;
   border-radius: 12px;
   padding: 4px;
-  color: var(--store-muted);
+  color: var(--color-muted);
   font-size: .875rem;
   font-weight: 700;
 }
@@ -71,13 +71,13 @@
 }
 
 .builder-steps button[aria-current="step"] {
-  background: var(--store-white);
-  color: var(--store-accent);
+  background: var(--color-surface);
+  color: var(--color-action);
   box-shadow: 0 1px 4px rgb(46 34 22 / 10%);
 }
 
 .builder-steps button[aria-current="step"] span {
-  background: var(--store-accent);
+  background: var(--color-action);
   color: white;
 }
 
@@ -132,23 +132,23 @@
   align-items: center;
   gap: 2px 11px;
   min-height: 68px;
-  border: 1px solid var(--store-line);
+  border: 1px solid var(--color-line);
   border-radius: 14px;
   padding: 9px 12px;
   cursor: pointer;
 }
 
 .builder-option:has(input:checked) {
-  border-color: var(--store-accent);
+  border-color: var(--color-action);
   background: #fbeee5;
 }
 
 .builder-option:has(input:enabled):hover {
-  border-color: var(--store-accent);
+  border-color: var(--color-action);
 }
 
 .builder-option:has(input:disabled) {
-  color: var(--store-muted);
+  color: var(--color-muted);
   background: #f6f2eb;
   cursor: not-allowed;
 }
@@ -157,7 +157,7 @@
   grid-row: span 2;
   width: 18px;
   height: 18px;
-  accent-color: var(--store-accent);
+  accent-color: var(--color-action);
   cursor: inherit;
 }
 
@@ -166,7 +166,7 @@
 }
 
 .builder-option span {
-  color: var(--store-muted);
+  color: var(--color-muted);
   font-size: .85rem;
 }
 
@@ -177,17 +177,17 @@
   flex-wrap: wrap;
   gap: 12px;
   padding-top: 16px;
-  border-top: 1px solid var(--store-line);
+  border-top: 1px solid var(--color-line);
 }
 
 .builder-total {
   display: grid;
-  color: var(--store-muted);
+  color: var(--color-muted);
   font-size: .82rem;
 }
 
 .builder-total strong {
-  color: var(--store-ink);
+  color: var(--color-ink);
   font-size: 1.5rem;
   line-height: 1.2;
 }
@@ -223,12 +223,12 @@
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);
   gap: 12px;
-  border-top: 1px solid var(--store-line);
+  border-top: 1px solid var(--color-line);
   padding-block: 9px;
 }
 
 .builder-summary dt {
-  color: var(--store-muted);
+  color: var(--color-muted);
 }
 
 .builder-summary dd {

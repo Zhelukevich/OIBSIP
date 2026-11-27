@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { formatPrice, ingredientPrice } from "../storefront";
 import type { PizzaSelection } from "../storefront";
 import type { InventoryItem } from "../types";
+import { Button } from "../components/Button";
+import { PageContainer } from "../components/PageContainer";
 import "../styles/builder.css";
 
 const steps = [
@@ -70,13 +72,13 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
   }
 
   return (
-    <main className="store-container builder">
+    <PageContainer className="builder">
       <header className="builder-heading">
-        <Link className="store-text-link" to="/#menu"><span aria-hidden="true">←</span> Back to menu</Link>
+        <Link className="action-link" to="/#menu"><span aria-hidden="true">←</span> Back to menu</Link>
         <h1>Build your own</h1>
         <p>Choose your crust, sauce, cheese, and toppings.</p>
       </header>
-      {catalogError && <p className="store-notice" role="alert">We couldn’t load the ingredients. <button className="store-text-link" onClick={onRetry}>Try again</button></p>}
+      {catalogError && <p className="store-notice" role="alert">We couldn’t load the ingredients. <button className="action-link" onClick={onRetry}>Try again</button></p>}
       {!catalog && !catalogError && <p role="status">Loading ingredients…</p>}
       {catalog && (
         <div className="builder-layout">
@@ -137,11 +139,11 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
             <div className="builder-actions">
               <p className="builder-total"><span>Pizza total</span><strong>{formatPrice(ingredientIds.length * ingredientPrice)}</strong></p>
               <div className="builder-buttons">
-                {step > 0 && <button className="store-button store-button--outline" onClick={() => goToStep(step - 1)}>Back</button>}
+                {step > 0 && <Button variant="outline" onClick={() => goToStep(step - 1)}>Back</Button>}
                 {finalStep ? (
-                  <button className="store-button" disabled={!addable} onClick={addToCart}>Add to cart <span aria-hidden="true">+</span></button>
+                  <Button disabled={!addable} onClick={addToCart}>Add to cart <span aria-hidden="true">+</span></Button>
                 ) : (
-                  <button className="store-button" disabled={!completed[step]} onClick={() => goToStep(step + 1)}>Continue <span aria-hidden="true">→</span></button>
+                  <Button disabled={!completed[step]} onClick={() => goToStep(step + 1)}>Continue <span aria-hidden="true">→</span></Button>
                 )}
               </div>
             </div>
@@ -162,6 +164,6 @@ export function BuilderPage({ catalog, catalogError, onRetry, canAdd, onAdd }: {
           </aside>
         </div>
       )}
-    </main>
+    </PageContainer>
   );
 }

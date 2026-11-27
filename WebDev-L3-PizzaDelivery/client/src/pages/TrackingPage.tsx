@@ -1,120 +1,167 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
-import { api } from "../services/api";
+import { Button } from "../components/Button";
+import { PageContainer } from "../components/PageContainer";
+import { api, apiErrorMessage } from "../services/api";
+import { openPayment, verifyPayment, type PaymentResponse } from "../services/payments";
 import { formatPrice } from "../storefront";
-import type { Currency, Order } from "../types";
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => { open(): void };
-  }
-}
+import type { Order } from "../types";
 
 const statusSteps = ["RECEIVED", "IN_KITCHEN", "SENT_TO_DELIVERY", "DELIVERED"];
 
 export function TrackingPage() {
   const { id } = useParams();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [error, setError] = useState("");
-  const [paying, setPaying] = useState(false);
+  return id ? <TrackingOrder key={id} id={id} /> : null;
+}
 
-  async function loadOrder() {
+function TrackingOrder({ id }: { id: string }) {
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentPhase, setPaymentPhase] = useState<"checkout" | "verification" | null>(null);
+  const [pendingPayment, setPendingPayment] = useState<PaymentResponse | null>(null);
+  const orderRequest = useRef<AbortController | null>(null);
+  const page = useRef<AbortController | null>(null);
+  const inFlight = useRef(false);
+
+  const orderUrl = "/orders/" + id;
+
+  const loadOrder = useCallback(async () => {
+    if (orderRequest.current) return;
+
+    const request = new AbortController();
+    orderRequest.current = request;
     try {
-      const { data } = await api.get(`/orders/${id}`);
-      setOrder(data.order);
+      const { data } = await api.get<{ order: Order }>(orderUrl, { signal: request.signal });
+      if (!request.signal.aborted) {
+        setOrder(data.order);
+        setLoadError("");
+      }
     } catch {
-      setError("Could not load this order");
+      if (!request.signal.aborted) setLoadError("Could not load this order.");
+    } finally {
+      if (orderRequest.current === request) orderRequest.current = null;
     }
-  }
+  }, [orderUrl]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    page.current = controller;
     void loadOrder();
-    const socket = io("http://localhost:5000", {
+
+    const socket = io(import.meta.env.VITE_SOCKET_ORIGIN || window.location.origin, {
       auth: { token: localStorage.getItem("pizza_token") },
     });
     socket.on("connect", () => socket.emit("order:join", id));
-    socket.on("order.statusChanged", () => void loadOrder());
-    const poll = window.setInterval(() => void loadOrder(), 15000);
+    socket.on("order.statusChanged", () => {
+      orderRequest.current?.abort();
+      orderRequest.current = null;
+      void loadOrder();
+    });
+    const poll = window.setInterval(loadOrder, 15000);
     return () => {
+      controller.abort();
+      orderRequest.current?.abort();
+      orderRequest.current = null;
       socket.disconnect();
       window.clearInterval(poll);
     };
-  }, [id]);
+  }, [id, loadOrder]);
 
   async function pay() {
-    setError("");
-    setPaying(true);
+    const signal = page.current?.signal;
+    if (!signal || signal.aborted || inFlight.current) return;
+
+    inFlight.current = true;
+    setPaymentError("");
+    setPaymentPhase(pendingPayment ? "verification" : "checkout");
+    let payment = pendingPayment;
     try {
-      const { data } = await api.post<{ keyId: string; paymentOrderId: string; amount: number; currency: Currency }>("/payments/create", { orderId: id });
-      if (!window.Razorpay) {
-        const script = document.createElement("script");
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        document.body.appendChild(script);
-        await new Promise<void>((resolve, reject) => {
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Could not load Razorpay"));
-        });
+      if (payment) {
+        // A previous verification may have succeeded before its response was lost.
+        const { data } = await api.get<{ order: Order }>(orderUrl, { signal });
+        if (data.order.status !== "AWAITING_PAYMENT") {
+          orderRequest.current?.abort();
+          setOrder(data.order);
+          setLoadError("");
+          setPendingPayment(null);
+          return;
+        }
+      } else {
+        payment = await openPayment(id, signal);
+        if (!payment) return;
+        if (!signal.aborted) setPendingPayment(payment);
       }
-      const razorpay = new window.Razorpay!({
-        key: data.keyId,
-        amount: data.amount,
-        currency: data.currency,
-        order_id: data.paymentOrderId,
-        name: "Slice Pizza",
-        description: "Pizza order",
-        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
-          await api.post("/payments/verify", {
-            orderId: id,
-            razorpayPaymentId: response.razorpay_payment_id,
-            razorpayOrderId: response.razorpay_order_id,
-            razorpaySignature: response.razorpay_signature,
-          });
-          await loadOrder();
-        },
-        modal: { ondismiss: () => setPaying(false) },
-      });
-      razorpay.open();
+
+      if (!signal.aborted) setPaymentPhase("verification");
+      const verifiedOrder = await verifyPayment(id, payment);
+      if (!signal.aborted) {
+        orderRequest.current?.abort();
+        setOrder(verifiedOrder);
+        setLoadError("");
+        setPendingPayment(null);
+      }
     } catch (caught) {
-      setError((caught as { response?: { data?: { message?: string } } }).response?.data?.message || "Payment could not be started");
+      if (!signal.aborted) {
+        const fallback = payment ? "Could not confirm your payment. Try confirming it again." : "Payment could not be started.";
+        setPaymentError(apiErrorMessage(caught, fallback));
+        if (payment) void loadOrder();
+      }
     } finally {
-      setPaying(false);
+      inFlight.current = false;
+      if (!signal.aborted) setPaymentPhase(null);
     }
   }
 
-  if (!order) return <main className="mx-auto max-w-[1200px] px-5 py-10">{error || "Loading order..."}</main>;
+  if (!order) {
+    return (
+      <PageContainer width="reading" className="py-10">
+        {loadError ? (
+          <>
+            <p className="mb-4 text-danger" role="alert">{loadError}</p>
+            <Button variant="outline" onClick={() => { setLoadError(""); void loadOrder(); }}>Try again</Button>
+          </>
+        ) : <p role="status">Loading order…</p>}
+      </PageContainer>
+    );
+  }
+
   const currentIndex = statusSteps.indexOf(order.status);
 
   return (
-    <main className="mx-auto max-w-[800px] px-5 py-10">
+    <PageContainer width="reading" className="py-10">
       <h1 className="mb-2 text-heading font-bold">Order #{order._id.slice(-6)}</h1>
-      <p className="mb-8 text-smoke">{formatPrice(order.total, order.currency ?? "INR")}</p>
+      <p className="mb-8 text-muted">{formatPrice(order.total, order.currency ?? "INR")}</p>
       {order.status === "AWAITING_PAYMENT" && (
-        <button className="mb-8 rounded-buttons bg-ember-orange px-6 py-3 font-bold text-white" onClick={pay} disabled={paying}>
-          {paying ? "Opening checkout..." : "Pay with Razorpay"}
-        </button>
+        <Button className="mb-8" onClick={() => void pay()} disabled={paymentPhase !== null}>
+          {paymentPhase === "checkout" ? "Checkout in progress…"
+            : paymentPhase === "verification" ? "Confirming payment…"
+            : pendingPayment ? "Retry payment confirmation" : "Pay with Razorpay"}
+        </Button>
       )}
-      {error && <p className="form-error mb-4">{error}</p>}
-      <div className="rounded-cards border border-hairline bg-paper-white p-6">
+      {paymentError && order.status === "AWAITING_PAYMENT" && <p className="mb-4 text-danger" role="alert">{paymentError}</p>}
+      {loadError && <p className="mb-4 text-danger" role="alert">{loadError}</p>}
+      <div className="rounded-cards border border-line bg-surface p-6">
         {statusSteps.map((status, index) => (
           <div className="relative flex items-center gap-4 pb-6 last:pb-0" key={status}>
-            {index < statusSteps.length - 1 && <span className={`absolute left-[11px] top-6 h-full w-0.5 ${index < currentIndex ? "bg-ember-orange" : "bg-hairline"}`} />}
-            <span className={`relative z-10 h-6 w-6 rounded-full border-4 ${index <= currentIndex ? "border-ember-orange bg-paper-white" : "border-hairline bg-paper-white"}`} />
+            {index < statusSteps.length - 1 && <span className={`absolute left-[11px] top-6 bottom-0 w-0.5 ${index < currentIndex ? "bg-action" : "bg-line"}`} />}
+            <span className={`relative z-10 h-6 w-6 rounded-full border-4 ${index <= currentIndex ? "border-action bg-surface" : "border-line bg-surface"}`} />
             <div>
               <strong>{status.replaceAll("_", " ")}</strong>
-              {index === currentIndex && <span className="ml-3 text-sm text-ember-orange">Current</span>}
+              {index === currentIndex && <span className="ml-3 text-sm text-action">Current</span>}
             </div>
           </div>
         ))}
       </div>
-      <section className="mt-6 rounded-cards border border-hairline bg-paper-white p-6">
+      <section className="mt-6 rounded-cards border border-line bg-surface p-6">
         <h2 className="mb-3 font-bold">Ingredients</h2>
         {order.ingredients.map((ingredient, index) => (
-          <p key={`${ingredient.inventoryItem}-${index}`} className="flex justify-between gap-4 text-sm text-smoke">
+          <p key={`${ingredient.inventoryItem}-${index}`} className="flex justify-between gap-4 text-sm text-muted">
             <span>{ingredient.name}</span><span>× {ingredient.quantity}</span>
           </p>
         ))}
       </section>
-    </main>
+    </PageContainer>
   );
 }
