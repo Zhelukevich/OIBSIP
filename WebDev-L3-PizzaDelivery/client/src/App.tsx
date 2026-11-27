@@ -6,6 +6,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { AdminPage } from "./pages/AdminPage";
 import { TrackingPage } from "./pages/TrackingPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordRecoveryPage";
 import { BuilderPage } from "./pages/BuilderPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
 import { BagIcon, StorefrontPage } from "./pages/StorefrontPage";
@@ -147,6 +148,8 @@ export function App() {
         <Route path="/login" element={<AuthPage key="login" mode="login" onAuth={onAuth} />} />
         <Route path="/register" element={<AuthPage key="register" mode="register" onAuth={onAuth} />} />
         <Route path="/verify-email" element={<VerifyEmailPage signedIn={Boolean(user)} />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage key={location.hash} />} />
         <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
         <Route path="/orders/:id" element={user ? <TrackingPage /> : <Navigate to="/login" />} />
         <Route path="/admin" element={user?.role === "admin" ? <AdminPage /> : <Navigate to="/" />} />

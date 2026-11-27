@@ -23,7 +23,7 @@ Audit on 2026-11-27. Checked items have a complete implementation for the checkl
 ### 👤 User Side
 - [x] User registration with email verification. The flow includes expiring links and a resend action. [Auth routes](server/src/routes/auth.routes.ts)
 - [x] User login with JWT-based authorisation. [Auth middleware](server/src/middleware/auth.ts)
-- [ ] Forgot password flow *(email reset link)*. The API issues and accepts reset tokens. The email needs a clickable URL, and the client needs recovery and reset pages. [Auth routes](server/src/routes/auth.routes.ts)
+- [x] Forgot password flow *(email reset link)*. Users can request a clickable, single-use link that expires after one hour and choose a new password. [Auth routes](server/src/routes/auth.routes.ts), [recovery pages](client/src/pages/PasswordRecoveryPage.tsx)
 - [x] Dashboard displaying available pizza varieties. The home page shows three ready-made pizzas with prices and availability based on ingredient stock. Customers can add available pizzas to the cart or open the custom pizza builder. [Storefront](client/src/pages/StorefrontPage.tsx)
 - [x] Custom pizza builder flow. The dedicated page guides customers through four steps and shows the recipe and running total before adding the pizza to the cart. [Builder page](client/src/pages/BuilderPage.tsx)
   - [x] **Step 1:** Choose a pizza base *(5 options seeded)*.

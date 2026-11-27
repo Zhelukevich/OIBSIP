@@ -3,10 +3,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import { z } from "zod";
-import nodemailer from "nodemailer";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { User } from "../models/User.js";
-import { canSendVerificationEmail, createEmailVerification, hashVerificationToken, sendVerificationEmail } from "../services/emailVerification.js";
+import { canSendEmail, sendEmail } from "../services/email.js";
+import { createEmailVerification, hashVerificationToken, sendVerificationEmail } from "../services/emailVerification.js";
 
 export const authRouter = Router();
 
@@ -22,7 +22,7 @@ authRouter.post("/register", async (request, response, next) => {
     response.status(400).json({ message: "Name, valid email, and an 8-character password are required" });
     return;
   }
-  if (process.env.NODE_ENV === "production" && !canSendVerificationEmail()) {
+  if (process.env.NODE_ENV === "production" && !canSendEmail()) {
     response.status(503).json({ message: "Email verification is unavailable" });
     return;
   }
@@ -103,7 +103,7 @@ authRouter.post("/verify-email", async (request, response, next) => {
 });
 
 authRouter.post("/resend-verification", requireAuth, async (request: AuthRequest, response, next) => {
-  if (process.env.NODE_ENV === "production" && !canSendVerificationEmail()) {
+  if (process.env.NODE_ENV === "production" && !canSendEmail()) {
     response.status(503).json({ message: "Email verification is unavailable" });
     return;
   }
@@ -130,41 +130,47 @@ authRouter.post("/resend-verification", requireAuth, async (request: AuthRequest
   }
 });
 
-authRouter.post("/forgot-password", async (request, response) => {
-  const parsed = z.object({ email: z.string().email() }).safeParse(request.body);
+authRouter.post("/forgot-password", async (request, response, next) => {
+  const parsed = credentialsSchema.pick({ email: true }).safeParse(request.body);
   if (!parsed.success) {
     response.status(400).json({ message: "Valid email is required" });
     return;
   }
 
-  const user = await User.findOne({ email: parsed.data.email.toLowerCase() }).select("+passwordResetTokenHash");
-  if (user) {
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    user.passwordResetTokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
-    await user.save();
-
-    if (process.env.SMTP_HOST) {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        auth: process.env.SMTP_USER
-          ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
-          : undefined,
-      });
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-        to: user.email,
-        subject: "Reset your Slice Pizza password",
-        text: `Reset token: ${rawToken}\nThis token expires in 1 hour.`,
-      });
-    }
+  if (!canSendEmail()) {
+    response.status(503).json({ message: "Password reset email is unavailable. Try again later." });
+    return;
   }
 
-  response.json({ message: "If the email exists, a password reset link will be sent" });
+  try {
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const resetUrl = new URL("/reset-password", process.env.CLIENT_URL || "http://localhost:5173");
+    resetUrl.hash = new URLSearchParams({ token: rawToken }).toString();
+    const result = await User.updateOne({ email: parsed.data.email }, {
+      $set: {
+        passwordResetTokenHash: crypto.createHash("sha256").update(rawToken).digest("hex"),
+        passwordResetExpires: new Date(Date.now() + 60 * 60 * 1000),
+      },
+    });
+    if (result.matchedCount === 1) {
+      try {
+        await sendEmail({
+          to: parsed.data.email,
+          subject: "Reset your Slice Pizza password",
+          text: `Reset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
+          html: `<p><a href="${resetUrl}">Reset your password</a></p><p>This link expires in 1 hour.</p>`,
+        });
+      } catch {
+        console.error("Password reset email could not be sent");
+      }
+    }
+    response.json({ message: "If the email exists, a password reset link will be sent" });
+  } catch (error) {
+    next(error);
+  }
 });
 
-authRouter.post("/reset-password", async (request, response) => {
+authRouter.post("/reset-password", async (request, response, next) => {
   const parsed = z.object({
     token: z.string().min(1),
     password: z.string().min(8),
@@ -174,19 +180,27 @@ authRouter.post("/reset-password", async (request, response) => {
     return;
   }
 
-  const tokenHash = crypto.createHash("sha256").update(parsed.data.token).digest("hex");
-  const user = await User.findOne({
-    passwordResetTokenHash: tokenHash,
-    passwordResetExpires: { $gt: new Date() },
-  }).select("+passwordHash +passwordResetTokenHash");
-  if (!user) {
-    response.status(400).json({ message: "Invalid or expired reset token" });
-    return;
+  try {
+    const passwordResetTokenHash = crypto.createHash("sha256").update(parsed.data.token).digest("hex");
+    const matchActiveToken = () => ({
+      passwordResetTokenHash,
+      passwordResetExpires: { $gt: new Date() },
+    });
+    if (!await User.exists(matchActiveToken())) {
+      response.status(400).json({ message: "Invalid or expired reset token" });
+      return;
+    }
+    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+    const result = await User.updateOne(matchActiveToken(), {
+      $set: { passwordHash },
+      $unset: { passwordResetTokenHash: 1, passwordResetExpires: 1 },
+    });
+    if (result.modifiedCount === 0) {
+      response.status(400).json({ message: "Invalid or expired reset token" });
+      return;
+    }
+    response.json({ message: "Password updated" });
+  } catch (error) {
+    next(error);
   }
-
-  user.passwordHash = await bcrypt.hash(parsed.data.password, 12);
-  user.passwordResetTokenHash = undefined;
-  user.passwordResetExpires = undefined;
-  await user.save();
-  response.json({ message: "Password updated" });
 });

@@ -67,6 +67,9 @@ export function AuthPage({ mode, onAuth }: {
         <div className="auth-photo" aria-hidden="true" />
         <div className="auth-card__body">
           <h1 id="auth-title">{isRegistration ? "Create your account" : "Welcome back"}</h1>
+          {!isRegistration && location.state?.passwordReset && (
+            <p className="auth-intro" role="status">Password updated. Sign in with your new password.</p>
+          )}
           <p className="auth-intro">
             {isRegistration ? "We’ll send you a link to confirm your email."
               : returnTo === "/checkout" ? "Sign in to continue with your order."
@@ -103,6 +106,9 @@ export function AuthPage({ mode, onAuth }: {
               {errors.password ? <p className="auth-field-error" id="auth-password-error" role="alert">{errors.password.message}</p>
                 : isRegistration && <p className="auth-field-hint" id="auth-password-hint">Use at least 8 characters.</p>}
             </div>
+            {!isRegistration && (
+              <Link className="store-text-link justify-self-start" to="/forgot-password" state={{ returnTo }}>Forgot your password?</Link>
+            )}
             {requestError && <p className="auth-request-error" role="alert">{requestError}</p>}
             <button className="store-button auth-submit" type="submit" disabled={isSubmitting}>
               {isRegistration ? isSubmitting ? "Creating account…" : "Create account"
