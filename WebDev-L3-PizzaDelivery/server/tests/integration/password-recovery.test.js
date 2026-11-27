@@ -3,10 +3,9 @@ import { createHash } from "node:crypto";
 import { once } from "node:events";
 import test from "node:test";
 import bcrypt from "bcryptjs";
-import express from "express";
 import nodemailer from "nodemailer";
+import { createApp } from "../../dist/app.js";
 import { User } from "../../dist/models/User.js";
-import { authRouter } from "../../dist/routes/auth.routes.js";
 
 test("password recovery emails a link and accepts an active token only once", async (t) => {
   process.env.CLIENT_URL = "https://pizza.example.test";
@@ -38,9 +37,7 @@ test("password recovery emails a link and accepts an active token only once", as
     select: async () => account.email === filter.email ? account : null,
   }));
 
-  const app = express();
-  app.use(express.json());
-  app.use("/api/auth", authRouter);
+  const app = createApp();
   const server = app.listen(0, "127.0.0.1");
   t.after(() => new Promise((resolve) => server.close(resolve)));
   await once(server, "listening");

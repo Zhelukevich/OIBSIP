@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { getClientUrl } from "../config.js";
 import { canSendEmail, sendEmail } from "./email.js";
 
 export function hashVerificationToken(token: string) {
@@ -7,7 +8,7 @@ export function hashVerificationToken(token: string) {
 
 export function createEmailVerification() {
   const token = randomBytes(32).toString("hex");
-  const url = new URL("/verify-email", process.env.CLIENT_URL || "http://localhost:5173");
+  const url = new URL("/verify-email", getClientUrl());
   url.hash = new URLSearchParams({ token }).toString();
   return {
     token,

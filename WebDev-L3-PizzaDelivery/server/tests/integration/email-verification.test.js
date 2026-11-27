@@ -2,13 +2,10 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
 import test from "node:test";
-import express from "express";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { createApp } from "../../dist/app.js";
 import { User } from "../../dist/models/User.js";
-import { adminRouter } from "../../dist/routes/admin.routes.js";
-import { authRouter } from "../../dist/routes/auth.routes.js";
-import { orderRouter } from "../../dist/routes/order.routes.js";
 
 function setEnvironment(t, values) {
   for (const [name, value] of Object.entries(values)) {
@@ -23,16 +20,13 @@ function setEnvironment(t, values) {
 }
 
 async function startApi(t) {
-  const app = express();
-  app.use(express.json());
-  app.use("/auth", authRouter);
-  app.use("/orders", orderRouter);
-  app.use("/admin", adminRouter);
+  setEnvironment(t, { JWT_SECRET: "email-verification-test-secret" });
+  const app = createApp();
   const server = app.listen(0, "127.0.0.1");
   t.after(() => new Promise((resolve) => server.close(resolve)));
   await once(server, "listening");
 
-  return (path, { body, token } = {}) => fetch(`http://127.0.0.1:${server.address().port}${path}`, {
+  return (path, { body, token } = {}) => fetch(`http://127.0.0.1:${server.address().port}/api${path}`, {
     method: body === undefined ? "GET" : "POST",
     headers: {
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),

@@ -31,7 +31,7 @@ Audit on 2026-11-27. Checked items have a complete implementation for the checkl
   - [x] **Step 3:** Choose a cheese type.
   - [x] **Step 4:** Choose vegetables *(multiple select)*.
 - [x] Order summary page before payment. The order details page shows the ingredients and total before opening checkout. [Tracking page](client/src/pages/TrackingPage.tsx)
-- [ ] Razorpay checkout integration *(test mode — clicking "Success" confirms the order)*. Checkout and signature verification are implemented. Bind verification to the order’s stored Razorpay ID, make confirmation idempotent, and verify the test-mode flow. [Payment routes](server/src/routes/payment.routes.ts)
+- [ ] Razorpay checkout integration *(test mode — clicking "Success" confirms the order)*. Retries reuse the stored Razorpay order, and signature verification updates the order once. Verify the test-mode flow. [Payment routes](server/src/routes/payment.routes.ts)
 - [ ] Real-time order status display on user dashboard (`Order Received` → `In Kitchen` → `Sent to Delivery`). The order details page updates via Socket.IO and polling. The orders list fetches once. [App](client/src/App.tsx), [tracking page](client/src/pages/TrackingPage.tsx)
 
 ---
@@ -43,4 +43,4 @@ Audit on 2026-11-27. Checked items have a complete implementation for the checkl
 - [x] Manual stock update capability for each inventory item. [Admin page](client/src/pages/AdminPage.tsx), [admin routes](server/src/routes/admin.routes.ts)
 - [x] Automated email notification to admin when inventory falls below a configurable threshold. An hourly `node-cron` job sends a grouped email using per-item thresholds and configured SMTP. [Low-stock job](server/src/jobs/lowStock.ts)
 - [x] Order management panel to view incoming orders and update their status. The API validates transitions and records status history. [Admin page](client/src/pages/AdminPage.tsx), [admin routes](server/src/routes/admin.routes.ts)
-- [ ] Status change reflected in real-time on the user's dashboard *(use polling or WebSockets)*. Admin updates trigger refreshes on the order details page. Add list refresh and restrict Socket.IO rooms to authorised viewers. [Admin routes](server/src/routes/admin.routes.ts), [server](server/src/server.ts)
+- [ ] Status change reflected in real-time on the user's dashboard *(use polling or WebSockets)*. Admin updates trigger refreshes on the order details page, and Socket.IO checks order ownership or admin access before each subscription. Add list refresh. [Admin routes](server/src/routes/admin.routes.ts), [order sockets](server/src/realtime/orders.ts)

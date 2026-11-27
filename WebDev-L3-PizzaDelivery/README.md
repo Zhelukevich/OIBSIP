@@ -61,6 +61,8 @@ Copy `.env.development.example` to `server/.env.development` and configure Mongo
 
 For a file-based production setup, copy `.env.production.example` to `server/.env.production`. After building the server, `npm --prefix server start` loads that file. Variables set by the hosting provider take precedence over values in the file. Both environment files are ignored by Git.
 
+Set a unique `JWT_SECRET` before starting the production server. To create the initial administrator, configure both `ADMIN_EMAIL` and `ADMIN_PASSWORD`. The password must have at least eight characters.
+
 ## Email configuration
 
 ### Local development with Mailpit

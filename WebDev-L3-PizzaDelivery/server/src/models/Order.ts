@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model } from "mongoose";
 
 export const orderStatuses = [
   "AWAITING_PAYMENT",
@@ -10,12 +10,14 @@ export const orderStatuses = [
   "CANCELLED",
 ] as const;
 
+export type OrderStatus = typeof orderStatuses[number];
+
 const orderSchema = new Schema(
   {
-    user: { type: Types.ObjectId, ref: "User", required: true, index: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     ingredients: [
       {
-        inventoryItem: { type: Types.ObjectId, ref: "Inventory", required: true },
+        inventoryItem: { type: Schema.Types.ObjectId, ref: "Inventory", required: true },
         name: { type: String, required: true },
         quantity: { type: Number, required: true, min: 1 },
       },
