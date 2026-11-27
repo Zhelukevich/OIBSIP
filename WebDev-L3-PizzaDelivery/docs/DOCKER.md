@@ -34,7 +34,7 @@ docker exec pizza-mongo-rs mongosh --quiet --eval 'rs.initiate({_id: ''rs0'', me
 docker exec pizza-mongo-rs mongosh --quiet --eval 'db.hello().isWritablePrimary'
 ```
 
-Configure this address in `server/.env`:
+Set this address in `server/.env.development`.
 
 ```env
 MONGODB_URI=mongodb://127.0.0.1:27017/pizza-delivery?replicaSet=rs0&directConnection=true

@@ -9,7 +9,7 @@ The pizza delivery app lives in `WebDev-L3-PizzaDelivery/`. The React and Vite f
 Run these commands from `WebDev-L3-PizzaDelivery/`.
 
 - `npm ci --prefix client` and `npm ci --prefix server` install dependencies from the package lockfiles.
-- Copy `.env.example` to `server/.env`, configure local values, and start MongoDB using `docs/DOCKER.md`. Keep credentials out of Git.
+- Copy `.env.development.example` to `server/.env.development`, configure local values, and start MongoDB using `docs/DOCKER.md`. Keep credentials out of Git.
 - `npm run dev:server` starts Express on port 5000. In a second terminal, `npm run dev:client` starts Vite on port 5173 and proxies `/api` to Express. `npm run dev` also starts Express alone.
 - `npm run build` builds the Vite client and compiles the TypeScript server. `npm run typecheck` checks both packages.
 

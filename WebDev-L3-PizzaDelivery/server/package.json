@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts --development",
+    "start": "node dist/server.js --production",
     "build": "tsc",
     "typecheck": "tsc --pretty false",
     "test": "tsc && node --test"
