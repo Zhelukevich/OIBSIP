@@ -4,7 +4,9 @@ import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import { z } from "zod";
 import nodemailer from "nodemailer";
+import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { User } from "../models/User.js";
+import { canSendVerificationEmail, createEmailVerification, hashVerificationToken, sendVerificationEmail } from "../services/emailVerification.js";
 
 export const authRouter = Router();
 
@@ -14,29 +16,42 @@ const credentialsSchema = z.object({
   password: z.string().min(8),
 });
 
-authRouter.post("/register", async (request, response) => {
+authRouter.post("/register", async (request, response, next) => {
   const parsed = credentialsSchema.safeParse(request.body);
   if (!parsed.success || !parsed.data.name) {
     response.status(400).json({ message: "Name, valid email, and an 8-character password are required" });
     return;
   }
-  if (await User.exists({ email: parsed.data.email })) {
-    response.status(409).json({ message: "Email is already registered" });
+  if (process.env.NODE_ENV === "production" && !canSendVerificationEmail()) {
+    response.status(503).json({ message: "Email verification is unavailable" });
     return;
   }
 
-  const rawVerificationToken = crypto.randomBytes(32).toString("hex");
-  const user = await User.create({
-    name: parsed.data.name,
-    email: parsed.data.email,
-    passwordHash: await bcrypt.hash(parsed.data.password, 12),
-    emailVerificationTokenHash: crypto.createHash("sha256").update(rawVerificationToken).digest("hex"),
-  });
+  try {
+    const verification = createEmailVerification();
+    const user = await User.create({
+      name: parsed.data.name,
+      email: parsed.data.email,
+      passwordHash: await bcrypt.hash(parsed.data.password, 12),
+      ...verification.fields,
+    });
 
-  response.status(201).json({
-    message: "Registration successful",
-    verificationToken: process.env.NODE_ENV === "production" ? undefined : rawVerificationToken,
-  });
+    try {
+      const delivery = await sendVerificationEmail(user.email, verification);
+      response.status(201).json({ message: "Registration successful", ...delivery });
+    } catch {
+      response.status(201).json({
+        message: "Account created. Sign in to request another verification email.",
+        verificationDeliveryFailed: true,
+      });
+    }
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000) {
+      response.status(409).json({ message: "Email is already registered" });
+      return;
+    }
+    next(error);
+  }
 });
 
 authRouter.post("/login", async (request, response) => {
@@ -62,22 +77,57 @@ authRouter.post("/login", async (request, response) => {
   });
 });
 
-authRouter.post("/verify-email", async (request, response) => {
-  const token = z.string().min(1).safeParse(request.body.token);
-  if (!token.success) {
+authRouter.post("/verify-email", async (request, response, next) => {
+  const parsed = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/) }).safeParse(request.body);
+  if (!parsed.success) {
     response.status(400).json({ message: "Verification token is required" });
     return;
   }
-  const hash = crypto.createHash("sha256").update(token.data).digest("hex");
-  const user = await User.findOne({ emailVerificationTokenHash: hash }).select("+emailVerificationTokenHash");
-  if (!user) {
-    response.status(400).json({ message: "Invalid or expired verification token" });
+  try {
+    const result = await User.updateOne({
+      emailVerified: false,
+      emailVerificationTokenHash: hashVerificationToken(parsed.data.token),
+      emailVerificationExpires: { $gt: new Date() },
+    }, {
+      $set: { emailVerified: true },
+      $unset: { emailVerificationTokenHash: 1, emailVerificationExpires: 1 },
+    });
+    if (result.modifiedCount === 0) {
+      response.status(400).json({ message: "Invalid or expired verification token" });
+      return;
+    }
+    response.json({ message: "Email verified" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+authRouter.post("/resend-verification", requireAuth, async (request: AuthRequest, response, next) => {
+  if (process.env.NODE_ENV === "production" && !canSendVerificationEmail()) {
+    response.status(503).json({ message: "Email verification is unavailable" });
     return;
   }
-  user.emailVerified = true;
-  user.emailVerificationTokenHash = undefined;
-  await user.save();
-  response.json({ message: "Email verified" });
+
+  try {
+    const verification = createEmailVerification();
+    const user = await User.findOneAndUpdate(
+      { _id: request.user!.id, emailVerified: false },
+      { $set: verification.fields },
+    );
+    if (!user) {
+      response.status(409).json({ message: "There is no pending email verification for this account" });
+      return;
+    }
+
+    try {
+      const delivery = await sendVerificationEmail(user.email, verification);
+      response.json({ message: "Verification email requested", ...delivery });
+    } catch {
+      response.status(503).json({ message: "Verification email could not be sent. Try again later." });
+    }
+  } catch (error) {
+    next(error);
+  }
 });
 
 authRouter.post("/forgot-password", async (request, response) => {

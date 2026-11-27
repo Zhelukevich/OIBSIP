@@ -60,6 +60,7 @@ async function seedApplication() {
 
 async function start() {
   await mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/pizza-delivery");
+  await User.init();
   await seedApplication();
   startLowStockJob();
 

@@ -8,7 +8,7 @@
     "start": "node dist/server.js",
     "build": "tsc",
     "typecheck": "tsc --pretty false",
-    "test": "node --test"
+    "test": "tsc && node --test"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

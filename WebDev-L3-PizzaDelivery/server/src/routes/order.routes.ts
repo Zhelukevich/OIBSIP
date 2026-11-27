@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Types } from "mongoose";
 import { z } from "zod";
-import { requireAuth, type AuthRequest } from "../middleware/auth.js";
+import { requireAuth, requireVerifiedEmail, type AuthRequest } from "../middleware/auth.js";
 import { Inventory } from "../models/Inventory.js";
 import { Order } from "../models/Order.js";
 
@@ -16,7 +16,7 @@ const createOrderSchema = z.object({
 
 orderRouter.use(requireAuth);
 
-orderRouter.post("/", async (request: AuthRequest, response) => {
+orderRouter.post("/", requireVerifiedEmail, async (request: AuthRequest, response) => {
   const parsed = createOrderSchema.safeParse(request.body);
   if (!parsed.success) {
     response.status(400).json({ message: "Choose at least one inventory item", errors: parsed.error.flatten() });

@@ -18,7 +18,7 @@ npm run test
 - `npm run dev:server` starts `tsx watch src/server.ts` in `server/`.
 - `npm run build` builds the Vite client, then the TypeScript server.
 - `npm run typecheck` typechecks both workspaces.
-- The root test command currently runs `node --test` in `server/`; `server/tests/unit/` and `server/tests/integration/` are placeholders.
+- The root test command builds the server before running `node --test` in `server/`.
 - Client test runner: `npm --prefix client test -- --run`.
 - Run one client Vitest file: `npm --prefix client test -- --run src/path/file.test.tsx`.
 - Run one server Node test file: `npm --prefix server test -- tests/unit/file.test.js`.

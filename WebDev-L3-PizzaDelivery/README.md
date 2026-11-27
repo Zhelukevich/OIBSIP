@@ -55,4 +55,10 @@ npm install
 npm run dev
 ```
 
-Copy `.env.example` to `.env` and configure MongoDB, JWT, email, and Razorpay values.
+Copy `.env.example` to `server/.env` and configure MongoDB, JWT, email, and Razorpay values.
+
+## Email verification
+
+Set `CLIENT_URL` to the frontend origin and configure `SMTP_HOST`, `SMTP_PORT`, and a sender through `EMAIL_FROM` or `SMTP_USER` in `server/.env`. Set `SMTP_PASSWORD` when SMTP authentication is required. In local development without SMTP, registration exposes a local verification link in the UI.
+
+Verification links expire after 24 hours. Users can sign in to request a new link from `/verify-email`. Creating an order requires a confirmed email address.

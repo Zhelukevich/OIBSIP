@@ -6,6 +6,7 @@ import { api } from "./services/api";
 import type { InventoryItem, Order, User } from "./types";
 import { AdminPage } from "./pages/AdminPage";
 import { TrackingPage } from "./pages/TrackingPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -53,13 +54,17 @@ function AuthPage({ mode, onAuth }: { mode: "login" | "register"; onAuth: (user:
     }
     try {
       if (register) {
-        await api.post("/auth/register", parsed.data);
-        navigate("/login");
+        const { data } = await api.post("/auth/register", parsed.data);
+        navigate("/verify-email", { state: {
+          verificationUrl: data.verificationUrl,
+          deliveryFailed: data.verificationDeliveryFailed,
+          registered: true,
+        } });
         return;
       }
       const { data } = await api.post("/auth/login", parsed.data);
       onAuth(data.user, data.token);
-      navigate(data.user.role === "admin" ? "/admin" : "/");
+      navigate(data.user.role === "admin" ? "/admin" : data.user.emailVerified ? "/" : "/verify-email");
     } catch (caught) {
       setError((caught as { response?: { data?: { message?: string } } }).response?.data?.message || "Request failed");
     }
@@ -156,6 +161,9 @@ function Builder({ user }: { user: User | null }) {
         </section>
       ))}
       {error && <p className="form-error mb-4">{error}</p>}
+      {user && !user.emailVerified && (
+        <Link className="mb-4 block text-indigo-bolt" to="/verify-email">Confirm your email before placing an order</Link>
+      )}
       <button className="rounded-buttons bg-ember-orange px-7 py-4 font-bold text-white" onClick={checkout} disabled={loading}>
         {loading ? "Creating order..." : "Review & order"}
       </button>
@@ -210,6 +218,7 @@ export function App() {
         <Route path="/" element={<Builder user={user} />} />
         <Route path="/login" element={<AuthPage key="login" mode="login" onAuth={onAuth} />} />
         <Route path="/register" element={<AuthPage key="register" mode="register" onAuth={onAuth} />} />
+        <Route path="/verify-email" element={<VerifyEmailPage signedIn={Boolean(user)} />} />
         <Route path="/orders" element={user ? <OrdersPage /> : <Navigate to="/login" />} />
         <Route path="/orders/:id" element={user ? <TrackingPage /> : <Navigate to="/login" />} />
         <Route path="/admin" element={user?.role === "admin" ? <AdminPage /> : <Navigate to="/" />} />

@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { User } from "../models/User.js";
 
 export interface AuthRequest extends Request {
   user?: { id: string; role: "user" | "admin" };
@@ -34,4 +35,17 @@ export function requireAdmin(request: AuthRequest, response: Response, next: Nex
     return;
   }
   next();
+}
+
+export async function requireVerifiedEmail(request: AuthRequest, response: Response, next: NextFunction) {
+  try {
+    const verified = await User.exists({ _id: request.user!.id, emailVerified: true });
+    if (!verified) {
+      response.status(403).json({ message: "Verify your email before placing an order" });
+      return;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 }

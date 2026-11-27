@@ -9,6 +9,7 @@ const userSchema = new Schema(
     role: { type: String, enum: ["user", "admin"], default: "user" },
     emailVerified: { type: Boolean, default: false },
     emailVerificationTokenHash: { type: String, select: false },
+    emailVerificationExpires: { type: Date, select: false },
     passwordResetTokenHash: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
   },
