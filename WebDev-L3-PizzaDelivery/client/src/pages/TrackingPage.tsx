@@ -107,7 +107,11 @@ export function TrackingPage() {
       </div>
       <section className="mt-6 rounded-cards border border-hairline bg-paper-white p-6">
         <h2 className="mb-3 font-bold">Ingredients</h2>
-        {order.ingredients.map((ingredient) => <p key={ingredient.inventoryItem} className="text-sm text-smoke">{ingredient.name}</p>)}
+        {order.ingredients.map((ingredient, index) => (
+          <p key={`${ingredient.inventoryItem}-${index}`} className="flex justify-between gap-4 text-sm text-smoke">
+            <span>{ingredient.name}</span><span>× {ingredient.quantity}</span>
+          </p>
+        ))}
       </section>
     </main>
   );

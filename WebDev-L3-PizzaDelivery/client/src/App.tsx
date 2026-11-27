@@ -1,173 +1,51 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api } from "./services/api";
 import type { InventoryItem, Order, User } from "./types";
+import { AuthPage } from "./pages/AuthPage";
 import { AdminPage } from "./pages/AdminPage";
 import { TrackingPage } from "./pages/TrackingPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { BuilderPage } from "./pages/BuilderPage";
+import { CheckoutPage } from "./pages/CheckoutPage";
+import { BagIcon, StorefrontPage } from "./pages/StorefrontPage";
+import { getCartOrder, readCart, saveCart, updateCart } from "./storefront";
+import type { CartLine, PizzaSelection } from "./storefront";
+import "./styles/storefront.css";
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-const registerSchema = loginSchema.extend({
-  name: z.string().trim().min(2),
-});
-
-function Shell({ user, onLogout, children }: { user: User | null; onLogout: () => void; children: React.ReactNode }) {
+function Shell({ user, cartCount, onLogout, children }: { user: User | null; cartCount: number; onLogout: () => void; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-warm-bone">
-      <header className="border-b border-hairline bg-paper-white">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-4">
-          <Link to="/" className="font-script text-4xl text-ember-orange">Slice</Link>
-          <nav className="flex items-center gap-4 text-sm font-medium">
+    <div className="store-shell">
+      <header className="store-header">
+        <div className="store-container store-header__inner">
+          <Link to="/" className="store-brand" aria-label="Slice Pizza home">slice<span>.</span></Link>
+          <nav className="store-nav" aria-label="Menu">
+            <Link to="/#menu">Menu</Link>
+            <Link to="/build">Build your own</Link>
+          </nav>
+          <nav className="store-account" aria-label="Account and cart">
             {user && <Link to="/orders">My orders</Link>}
             {user?.role === "admin" && <Link to="/admin">Admin</Link>}
             {user ? (
-              <button className="rounded-buttons border border-hairline px-4 py-2" onClick={onLogout}>Sign out</button>
+              <button onClick={onLogout}>Sign out</button>
             ) : (
-              <Link className="rounded-buttons bg-indigo-bolt px-4 py-2 text-white" to="/login">Sign in</Link>
+              <Link to="/login">Sign in</Link>
             )}
+            <Link to="/checkout" className="store-cart-link" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "pizza" : "pizzas"}`}>
+              <BagIcon /><span>Cart</span><strong>{cartCount}</strong>
+            </Link>
+            <span className="sr-only" role="status">{cartCount} {cartCount === 1 ? "pizza" : "pizzas"} in your cart</span>
           </nav>
         </div>
       </header>
       {children}
+      <footer className="store-footer">
+        <div className="store-container">
+          <Link to="/" className="store-brand" aria-label="Slice Pizza home">slice<span>.</span></Link>
+          <Link className="store-text-link" to="/#menu">Menu</Link>
+        </div>
+      </footer>
     </div>
-  );
-}
-
-function AuthPage({ mode, onAuth }: { mode: "login" | "register"; onAuth: (user: User, token: string) => void }) {
-  const navigate = useNavigate();
-  const register = mode === "register";
-  const schema = register ? registerSchema : loginSchema;
-  const { register: field, handleSubmit, formState: { errors } } = useForm<{ name: string; email: string; password: string }>();
-  const [error, setError] = useState("");
-
-  async function submit(values: { name: string; email: string; password: string }) {
-    setError("");
-    const parsed = schema.safeParse(values);
-    if (!parsed.success) {
-      setError("Please check the entered details");
-      return;
-    }
-    try {
-      if (register) {
-        const { data } = await api.post("/auth/register", parsed.data);
-        navigate("/verify-email", { state: {
-          verificationUrl: data.verificationUrl,
-          deliveryFailed: data.verificationDeliveryFailed,
-          registered: true,
-        } });
-        return;
-      }
-      const { data } = await api.post("/auth/login", parsed.data);
-      onAuth(data.user, data.token);
-      navigate(data.user.role === "admin" ? "/admin" : data.user.emailVerified ? "/" : "/verify-email");
-    } catch (caught) {
-      setError((caught as { response?: { data?: { message?: string } } }).response?.data?.message || "Request failed");
-    }
-  }
-
-  return (
-    <main className="mx-auto max-w-md px-5 py-16">
-      <form className="rounded-cards bg-paper-white p-8 shadow-sm" onSubmit={handleSubmit(submit)}>
-        <h1 className="mb-6 text-heading-sm font-bold">{register ? "Create account" : "Welcome back"}</h1>
-        {register && (
-          <label className="form-label">Name
-            <input className="form-input" {...field("name")} />
-          </label>
-        )}
-        <label className="form-label">Email
-          <input className="form-input" type="email" {...field("email")} />
-        </label>
-        <label className="form-label">Password
-          <input className="form-input" type="password" {...field("password")} />
-        </label>
-        {"name" in errors && errors.name && <p className="form-error">Enter at least 2 characters</p>}
-        {errors.email && <p className="form-error">Enter a valid email</p>}
-        {errors.password && <p className="form-error">Password must contain at least 8 characters</p>}
-        {error && <p className="form-error">{error}</p>}
-        <button className="mt-5 w-full rounded-buttons bg-indigo-bolt px-5 py-3 font-bold text-white">
-          {register ? "Register" : "Sign in"}
-        </button>
-        <Link className="mt-5 block text-center text-sm text-indigo-bolt" to={register ? "/login" : "/register"}>
-          {register ? "Already have an account?" : "Create a new account"}
-        </Link>
-      </form>
-    </main>
-  );
-}
-
-function Builder({ user }: { user: User | null }) {
-  const navigate = useNavigate();
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [selected, setSelected] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/catalog").then(({ data }) => setItems(data.items)).catch(() => setError("Could not load catalog"));
-  }, []);
-
-  async function checkout() {
-    if (!user) return navigate("/login");
-    const types = ["base", "sauce", "cheese", "vegetable"];
-    if (types.some((type) => !selected[type])) {
-      setError("Choose a base, sauce, cheese, and at least one vegetable");
-      return;
-    }
-    setLoading(true);
-    try {
-      const ingredientIds = Object.values(selected).filter(Boolean);
-      const { data } = await api.post("/orders", {
-        ingredients: ingredientIds.map((inventoryItem) => ({ inventoryItem })),
-      });
-      const order = data.order as Order;
-      if (!order?._id) throw new Error("Order creation failed");
-      navigate(`/orders/${order._id}`);
-    } catch (caught) {
-      setError((caught as { response?: { data?: { message?: string } } }).response?.data?.message || "Could not create order");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const types: InventoryItem["type"][] = ["base", "sauce", "cheese", "vegetable"];
-  return (
-    <main className="mx-auto max-w-[1200px] px-5 py-10">
-      <section className="mb-10 rounded-hero bg-lavender-mist p-8 md:p-12">
-        <p className="mb-2 text-sm font-bold uppercase tracking-widest text-indigo-bolt">Made by you</p>
-        <h1 className="max-w-xl text-heading font-bold">Build your perfect pizza</h1>
-      </section>
-      {types.map((type) => (
-        <section className="mb-8" key={type}>
-          <h2 className="mb-4 text-heading-sm font-bold capitalize">{type}</h2>
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-            {items.filter((item) => item.type === type).map((item) => (
-              <button
-                key={item._id}
-                type="button"
-                onClick={() => setSelected((current) => ({ ...current, [type]: item._id }))}
-                className={`rounded-cards border p-4 text-left ${selected[type] === item._id ? "border-indigo-bolt ring-2 ring-indigo-bolt/20" : "border-hairline"}`}
-                disabled={item.quantity < 1}
-              >
-                <span className="block font-bold">{item.name}</span>
-                <span className="text-sm text-smoke">{item.quantity} available</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      ))}
-      {error && <p className="form-error mb-4">{error}</p>}
-      {user && !user.emailVerified && (
-        <Link className="mb-4 block text-indigo-bolt" to="/verify-email">Confirm your email before placing an order</Link>
-      )}
-      <button className="rounded-buttons bg-ember-orange px-7 py-4 font-bold text-white" onClick={checkout} disabled={loading}>
-        {loading ? "Creating order..." : "Review & order"}
-      </button>
-    </main>
   );
 }
 
@@ -194,6 +72,10 @@ function OrdersPage() {
 
 export function App() {
   const location = useLocation();
+  const [cart, setCart] = useState(readCart);
+  const [catalog, setCatalog] = useState<InventoryItem[] | null>(null);
+  const [catalogError, setCatalogError] = useState(false);
+  const [catalogRevision, setCatalogRevision] = useState(0);
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem("pizza_user");
     return saved ? JSON.parse(saved) : null;
@@ -210,12 +92,58 @@ export function App() {
     setUser(null);
   }
 
-  useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
+  useEffect(() => {
+    if (location.hash === "#menu") document.getElementById("menu")?.scrollIntoView();
+    else window.scrollTo(0, 0);
+  }, [location.pathname, location.hash, location.key]);
+
+  useEffect(() => { saveCart(cart); }, [cart]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    api.get<{ items: InventoryItem[] }>("/catalog", { signal: controller.signal })
+      .then(({ data }) => {
+        if (!Array.isArray(data.items)) throw new Error("Invalid catalog");
+        if (!controller.signal.aborted) setCatalog(data.items);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setCatalog(null);
+          setCatalogError(true);
+        }
+      });
+    return () => controller.abort();
+  }, [catalogRevision]);
+
+  function refreshCatalog() {
+    setCatalogError(false);
+    setCatalogRevision((revision) => revision + 1);
+  }
+
+  function canAdd(pizza: PizzaSelection) {
+    return Boolean(catalog && getCartOrder(updateCart(cart, pizza, 1), catalog));
+  }
+
+  function changeCart(pizza: PizzaSelection, amount: number) {
+    setCart((current) => {
+      const next = updateCart(current, pizza, amount);
+      return amount < 0 || (catalog && getCartOrder(next, catalog)) ? next : current;
+    });
+  }
+
+  function onOrdered(ordered: CartLine[]) {
+    setCart((current) => ordered.reduce((remaining, { pizza, quantity }) => updateCart(remaining, pizza, -quantity), current));
+    refreshCatalog();
+  }
+
+  const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
 
   return (
-    <Shell user={user} onLogout={logout}>
+    <Shell user={user} cartCount={cartCount} onLogout={logout}>
       <Routes>
-        <Route path="/" element={<Builder user={user} />} />
+        <Route path="/" element={<StorefrontPage catalog={catalog} catalogError={catalogError} onRetry={refreshCatalog} canAdd={canAdd} onAdd={(pizza) => changeCart(pizza, 1)} />} />
+        <Route path="/build" element={<BuilderPage catalog={catalog} catalogError={catalogError} onRetry={refreshCatalog} canAdd={canAdd} onAdd={(pizza) => changeCart(pizza, 1)} />} />
+        <Route path="/checkout" element={<CheckoutPage cart={cart} catalog={catalog} catalogError={catalogError} user={user} onChange={changeCart} onOrdered={onOrdered} onRetry={refreshCatalog} />} />
         <Route path="/login" element={<AuthPage key="login" mode="login" onAuth={onAuth} />} />
         <Route path="/register" element={<AuthPage key="register" mode="register" onAuth={onAuth} />} />
         <Route path="/verify-email" element={<VerifyEmailPage signedIn={Boolean(user)} />} />

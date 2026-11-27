@@ -6,6 +6,7 @@ type RegistrationNotice = {
   registered?: boolean;
   deliveryFailed?: boolean;
   verificationUrl?: string;
+  returnTo?: string;
 };
 
 export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
@@ -26,7 +27,7 @@ export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
       if (token) {
         await api.post("/auth/verify-email", { token });
         setVerified(true);
-        navigate("/verify-email", { replace: true });
+        navigate("/verify-email", { replace: true, state: { returnTo: registration?.returnTo } });
       } else {
         const { data } = await api.post("/auth/resend-verification");
         setVerificationUrl(data.verificationUrl);
@@ -56,7 +57,7 @@ export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
           </p>
         )}
         {!verified && !token && verificationUrl && (
-          <a className="mt-4 block text-indigo-bolt" href={verificationUrl}>Open local verification link</a>
+          <Link className="mt-4 block text-indigo-bolt" to={verificationUrl} state={{ returnTo: registration?.returnTo }}>Open local verification link</Link>
         )}
         {error && <p className="form-error mt-4" role="alert">{error}</p>}
         {!verified && (token || signedIn) && (
@@ -67,7 +68,7 @@ export function VerifyEmailPage({ signedIn }: { signedIn: boolean }) {
         {token && error && signedIn && (
           <Link className="mt-4 block text-indigo-bolt" to="/verify-email" onClick={() => setError("")}>Request a new link</Link>
         )}
-        <Link className="mt-5 block text-center text-sm text-indigo-bolt" to="/login">Sign in</Link>
+        <Link className="mt-5 block text-center text-sm text-indigo-bolt" to="/login" state={{ returnTo: registration?.returnTo }}>Sign in</Link>
       </section>
     </main>
   );
